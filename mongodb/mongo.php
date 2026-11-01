@@ -77,3 +77,61 @@ function completeSession(string $sessionID): bool {
     );
     return $result->getModifiedCount() === 1;
 }
+
+
+// ------------------------------------------------------------------
+// Fully qualified class names are used, so no extra "use" lines needed.
+// ------------------------------------------------------------------
+
+/**
+ * Makes a MongoDB document safe to send to the frontend as JSON.
+ * Turns dates into text like "2026-10-27T10:05:00+00:00"
+ * and the internal _id into a plain string.
+ * Works on one document or a list of documents.
+ */
+function formatDates($data) {
+    if ($data instanceof MongoDB\BSON\UTCDateTime) {
+        return $data->toDateTime()->format('c');
+    }
+    if ($data instanceof MongoDB\BSON\ObjectId) {
+        return (string) $data;
+    }
+    if (is_array($data)) {
+        return array_map('formatDates', $data);
+    }
+    return $data;
+}
+
+/** Find one player by playerID. Returns null if not found. */
+function getPlayer(string $playerID): ?array {
+    return getDb()->players->findOne(['playerID' => $playerID], TYPE_MAP);
+}
+
+/** Find one player by username (for login / resume). Returns null if not found. */
+function getPlayerByUsername(string $username): ?array {
+    return getDb()->players->findOne(['username' => $username], TYPE_MAP);
+}
+
+/** All games a player has played, newest first. Returns an empty list if none. */
+function getSessionsByPlayer(string $playerID): array {
+    $cursor = getDb()->game_sessions->find(
+        ['playerID' => $playerID],
+        array_merge(TYPE_MAP, ['sort' => ['started_at' => -1]])
+    );
+    return $cursor->toArray();
+}
+
+/**
+ * The player's most recent game, or null if they have none.
+ * Pass true to get only the latest UNFINISHED game (for "Continue").
+ */
+function getLatestSession(string $playerID, bool $unfinishedOnly = false): ?array {
+    $filter = ['playerID' => $playerID];
+    if ($unfinishedOnly) {
+        $filter['completed_at'] = null;
+    }
+    return getDb()->game_sessions->findOne(
+        $filter,
+        array_merge(TYPE_MAP, ['sort' => ['started_at' => -1]])
+    );
+}

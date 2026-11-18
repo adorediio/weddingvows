@@ -1,0 +1,56 @@
+/* =====================================================
+   ROOM CHOICES (cards, locks, prompt text, red pulse)
+   ===================================================== */
+
+#roomChoices { position: fixed; inset: 0; display: flex; align-items: center;
+    justify-content: center; gap: 2vw; z-index: 10; pointer-events: none; }
+
+.roomCard { pointer-events: auto; cursor: pointer; width: 15vw; min-width: 130px;
+    aspect-ratio: 3 / 4; background: rgba(255,255,255,0.85); border: 2px solid #fff;
+    border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; font-family: Georgia, serif; color: #4a2c3a;
+    opacity: 0; transform: scale(0.4) translateY(40px);
+    animation: roomPop 0.5s cubic-bezier(.2,1.4,.4,1) forwards;
+    transition: transform 0.2s, box-shadow 0.2s; }
+.roomCard:hover { transform: scale(1.06) !important; box-shadow: 0 0 30px white; }
+.roomCard.visited { opacity: 0.55 !important; }
+.roomCard h3 { margin: 8px 0 4px; font-size: 1.1rem; }
+.roomCard p { margin: 0; font-size: 0.8rem; opacity: 0.75; }
+.roomNum { font-size: 2rem; }
+.roomCard h3, .roomCard p, .roomNum { text-shadow: 0 1px 8px rgba(255,255,255,0.9); }
+@keyframes roomPop { to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* Locked cards: greyed out, lock on top, not clickable */
+.roomCard { position: relative; }
+.lockIcon { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    font-size: 1.8rem; pointer-events: none; z-index: 2; }
+.roomCard:not(.locked) .lockIcon { display: none; }
+.roomCard.locked { filter: grayscale(0) brightness(0.55); cursor: not-allowed; }
+.roomCard.locked:hover { transform: scale(1) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+
+/* Question above the cards */
+#roomPrompt { position: fixed; left: 0; right: 0; top: 10vh; z-index: 11;
+    text-align: center; pointer-events: none; font-family: Georgia, serif;
+    color: white; font-size: clamp(1.3rem, 3vw, 2.4rem); letter-spacing: 0.05em;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.8), 0 0 30px rgba(255,60,60,0.6);
+    opacity: 0; animation: promptFade 1.5s ease 0.3s forwards,
+    promptShake 3s ease-in-out 2s infinite; }
+#roomPrompt small { display: block; margin-top: 10px; font-size: 0.5em;
+    opacity: 0.8; font-style: italic; letter-spacing: 0.1em; }
+@keyframes promptFade { to { opacity: 1; } }
+@keyframes promptShake { 0%,100% { transform: translate(0,0); }
+    92% { transform: translate(0,0); } 94% { transform: translate(-2px,1px); }
+    96% { transform: translate(2px,-1px); } 98% { transform: translate(-1px,0); } }
+
+/* Slow, uneasy pulse */
+#pulseOverlay { position: fixed; inset: 0; z-index: 5; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(120,0,0,0) 40%, rgba(255, 241, 241, 0.5) 100%);
+    opacity: 0; animation: heartbeat 4.5s ease-in-out infinite; }
+@keyframes heartbeat {
+    0%   { opacity: 0.15; }
+    45%  { opacity: 0.45; }
+    55%  { opacity: 0.30; }
+    68%  { opacity: 0.50; }
+    100% { opacity: 0.15; }
+}

@@ -167,3 +167,41 @@ function countChoicesForScene(string $sceneID): array {
     }
     return $counts;
 }
+
+function getCommunityPulse(): array {
+    $pipeline = [
+        ['$facet' => [
+            'totals' => [
+                ['$group' => [
+                    '_id'           => null,
+                    'sessions'      => ['$sum' => 1],
+                    'completed'     => ['$sum' => ['$cond' => [['$ne' => ['$completed_at', null]], 1, 0]]],
+                    'total_choices' => ['$sum' => ['$size' => ['$ifNull' => ['$choices', []]]]],
+                ]],
+            ],
+            'secret_sessions' => [
+                ['$match' => ['choices.choiceID' => ['$in' => ['r2_06', 'r2_07', 'r2_11', 'r2_17', 'r2_25']]]],
+                ['$count' => 'n'],
+            ],
+            'bills_sessions' => [
+                ['$match' => ['choices.choiceID' => ['$in' => ['r1_04', 'r1_06', 'r1_15']]]],
+                ['$count' => 'n'],
+            ],
+        ]],
+    ];
+
+    $res = getDb()->game_sessions->aggregate($pipeline, TYPE_MAP)->toArray();
+    $facet = $res[0] ?? [];
+    $totals = $facet['totals'][0] ?? ['sessions' => 0, 'completed' => 0, 'total_choices' => 0];
+    $sessions = max(1, (int) $totals['sessions']);
+    $secretCount = (int) ($facet['secret_sessions'][0]['n'] ?? 0);
+    $billsCount  = (int) ($facet['bills_sessions'][0]['n'] ?? 0);
+
+    return [
+        'total_sessions'     => (int) $totals['sessions'],
+        'completed_sessions' => (int) $totals['completed'],
+        'avg_choices'        => $totals['sessions'] > 0 ? round($totals['total_choices'] / $totals['sessions'], 1) : 0,
+        'secret_percent'     => round($secretCount * 100 / $sessions),
+        'bills_percent'      => round($billsCount * 100 / $sessions),
+    ];
+}

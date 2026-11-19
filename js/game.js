@@ -12,6 +12,7 @@
     const API_BASE = 'api/index.php';   // change this if your API lives somewhere else
     const MAX_TENSION_POINTS = 5;       // total choice tension that fills the red vignette
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
 
     // Verified against MSF's NAVH page. Re-check before submitting.
     const SUPPORT = [
@@ -31,6 +32,14 @@
         profile: null          // { age_group } from the personal start, or null if skipped
     };
     const roomCache = {};
+
+    const ROOM_DEFAULT_REASON = {
+        1: 'Financial Problems',
+        2: 'Adultery & Infidelity',
+        3: 'Adultery & Infidelity',
+        4: 'Unreasonable Behaviour'
+    };
+    const spotlightCache = {};
 
     // Sound effects played by scenes ("sfx" in the room JSON). Put your files in /audio
     // and change the file names here. A missing file is skipped (one console warning).
@@ -162,7 +171,7 @@
     // ---------- overlays ----------
 
     function setCardsVisible(visible) {
-        ['roomChoices', 'roomPrompt'].forEach(function (id) {
+        ['roomChoices', 'roomPrompt', 'hubPulseBar'].forEach(function (id) {
             const n = document.getElementById(id);
             if (n) n.style.display = visible ? '' : 'none';
         });
@@ -184,6 +193,84 @@
         root.append(vignette, body);
         document.body.appendChild(root);
         story = { root: root, body: body };
+    }
+
+    // Fills the empty top half of .story with live MySQL data for the current theme
+    async function updateMidgameHud(reason) {
+        if (!story || !reason) return;
+        let hud = story.root.querySelector('.midgameHud');
+        if (!hud) {
+            hud = el('aside', 'midgameHud');
+            story.root.insertBefore(hud, story.body);
+        }
+
+        try {
+            let data = spotlightCache[reason];
+            if (!data) {
+                const res = await api('GET', '/stats/midgame?reason=' + encodeURIComponent(reason));
+                data = res.spotlight;
+                spotlightCache[reason] = data;
+            }
+            if (!data || !data.summary) return;
+
+            hud.replaceChildren();
+            const s = data.summary;
+            const yoyText = s.yoy_pts === null ? '' :
+                (s.yoy_pts > 0 ? ' (▲ ' + s.yoy_pts + ' pts YoY)' :
+                (s.yoy_pts < 0 ? ' (▼ ' + Math.abs(s.yoy_pts) + ' pts YoY)' : ' (unchanged YoY)'));
+
+            hud.appendChild(el('div', 'hudKicker', 'Singapore ' + data.year + ' · Live SQL Reality Check'));
+            hud.appendChild(el('div', 'hudHeadline',
+                data.reason + ': ' + s.share_pct + '% of divorces (' + s.count.toLocaleString() +
+                ' cases, Rank #' + s.rank + ')' + yoyText));
+
+            if (data.peak_duration) {
+                hud.appendChild(el('div', 'hudSub',
+                    'Most common in marriages lasting ' + data.peak_duration.marriage_duration +
+                    ' (' + data.peak_duration.share_of_reason_pct + '% of cases citing this reason).'));
+            }
+            hud.classList.add('ready');
+        } catch (e) {
+            // stay hidden if API is offline
+        }
+    }
+
+    // Fills the empty bottom strip of the Room Selection hub with live MySQL + MongoDB stats
+    async function loadHubPulse() {
+        let bar = document.getElementById('hubPulseBar');
+        if (!bar) {
+            bar = el('div', 'hubPulseBar');
+            bar.id = 'hubPulseBar';
+            document.body.appendChild(bar);
+        }
+        try {
+            const data = await api('GET', '/stats/hub');
+            const items = [];
+            if (data.sql && data.sql.top_reasons && data.sql.top_reasons[0]) {
+                const top = data.sql.top_reasons[0];
+                items.push('SG ' + data.sql.year + ' #1 divorce reason: ' + top.reason + ' (' + top.percent + '%)');
+            }
+            if (data.sql && data.sql.peak_age) {
+                items.push('Peak divorce age group: ' + data.sql.peak_age.age_group + ' (' + data.sql.peak_age.percent + '%)');
+            }
+            if (data.sql && data.sql.biggest_rise) {
+                items.push('Fastest rise: ' + data.sql.biggest_rise.reason + ' (+' + data.sql.biggest_rise.delta.toLocaleString() + ' YoY)');
+            }
+            if (data.community && data.community.total_sessions > 0) {
+                items.push('Community runs logged in MongoDB: ' + data.community.total_sessions);
+            }
+            if (!items.length) return;
+
+            let idx = 0;
+            bar.textContent = items[0];
+            if (bar.dataset.timer) clearInterval(Number(bar.dataset.timer));
+            bar.dataset.timer = String(setInterval(function () {
+                idx = (idx + 1) % items.length;
+                bar.textContent = items[idx];
+            }, 4500));
+        } catch (e) {
+            bar.style.display = 'none';
+        }
     }
 
     // Each room file sets its own "maxTension" (the highest total a player can reach)
@@ -378,6 +465,7 @@
             game.roomId = id;
             setTension(0);
             game.busy = false;
+            updateMidgameHud(ROOM_DEFAULT_REASON[id]);
             renderScene(game.room.start);
         } catch (e) {
             game.busy = false;
@@ -438,6 +526,7 @@
         button.classList.add('chosen');
 
         setTension(Math.max(0, game.tensionPoints + (choice.tension || 0)));
+        if (choice.reason) updateMidgameHud(choice.reason);
 
         // The API decides the next scene. If it cannot be reached, the room file is used.
         let next = choice.next;
@@ -563,12 +652,94 @@
         return box;
     }
 
+    async function showHalfwayCheckpoint() {
+        openStory();
+        story.root.classList.add('dashMode');
+        story.body.appendChild(el('p', 'storyText', 'Loading your halfway snapshot...'));
+
+        try {
+            await ensureSession();
+            const qs = '?reason=' + encodeURIComponent('Adultery & Infidelity') +
+                       '&sessionID=' + encodeURIComponent(game.sessionID);
+            const data = await api('GET', '/stats/midgame' + qs);
+
+            story.body.replaceChildren();
+            const wrap = el('div', 'dash');
+            wrap.appendChild(el('p', 'hudKicker', 'Halfway Checkpoint · Rooms 1–2 Complete'));
+            wrap.appendChild(el('h2', 'dashTitle', 'Where your marriage stands so far'));
+
+            const soFar = data.session_so_far || {};
+            const scores = Object.entries(soFar.scores || {});
+            if (scores.length) {
+                wrap.appendChild(el('p', 'dashLead',
+                    'Across ' + soFar.choices_made + ' choices so far, your path has leaned toward ' +
+                    soFar.top_reason + '.'));
+            } else {
+                wrap.appendChild(el('p', 'dashLead',
+                    'Across ' + (soFar.choices_made || 0) + ' choices so far, you have kept communication open — let’s see if it holds when trust is tested.'));
+            }
+
+            const comm = data.community || {};
+            const secretPct = comm.secret_percent || 0;
+            const billsPct  = comm.bills_percent || 0;
+            const peakAge   = data.sql_facts && data.sql_facts.peak_age;
+
+            const grid = el('div', 'halfwayGrid');
+
+            const c1 = el('div', 'halfwayStat');
+            c1.appendChild(el('div', 'halfwayNum', secretPct + '%'));
+            c1.appendChild(el('div', 'halfwayLbl', 'of players hid messages in Room 2 (MongoDB)'));
+
+            const c2 = el('div', 'halfwayStat');
+            c2.appendChild(el('div', 'halfwayNum', billsPct + '%'));
+            c2.appendChild(el('div', 'halfwayLbl', 'avoided money talk in Room 1 (MongoDB)'));
+
+            const c3 = el('div', 'halfwayStat');
+            c3.appendChild(el('div', 'halfwayNum', peakAge ? peakAge.age_group : '35-39'));
+            c3.appendChild(el('div', 'halfwayLbl',
+                'peak divorce age band in Singapore ' + (data.sql_facts ? data.sql_facts.year : '') +
+                (peakAge ? ' (' + peakAge.percent + '%, MySQL)' : '')));
+
+            grid.append(c1, c2, c3);
+            wrap.appendChild(grid);
+
+            if (soFar.top_reason) {
+                const sp = (await api('GET', '/stats/midgame?reason=' + encodeURIComponent(soFar.top_reason))).spotlight;
+                if (sp && sp.summary) {
+                    wrap.appendChild(el('p', 'dashText',
+                        'In Singapore (' + sp.year + '), "' + sp.reason + '" was cited in ' +
+                        sp.summary.count.toLocaleString() + ' divorces (' + sp.summary.share_pct +
+                        '%, Rank #' + sp.summary.rank + ')' +
+                        (sp.peak_duration ? ' — peaking in marriages of ' + sp.peak_duration.marriage_duration + '.' : '.')));
+                }
+            }
+
+            const cont = el('button', 'storyChoice endingBtn', 'Continue to Room 3');
+            cont.type = 'button';
+            cont.addEventListener('click', function () {
+                closeStory();
+                restoreCardAudio();
+                setCardsVisible(true);
+            });
+            wrap.appendChild(cont);
+            story.body.appendChild(wrap);
+        } catch (e) {
+            closeStory();
+            restoreCardAudio();
+            setCardsVisible(true);
+        }
+    }
+
     function finishRoom() {
         const id = game.roomId;
         closeStory();
         restoreCardAudio();
         unlockRoom(id + 1);
         completeRoom(id);   // calls showEnding() once all four rooms are done
+        if (id === 2 && visitedRooms.size < rooms.length) {
+            showHalfwayCheckpoint();
+            return;
+        }
         if (visitedRooms.size < rooms.length) setCardsVisible(true);
     }
 

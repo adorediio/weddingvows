@@ -101,6 +101,45 @@ try {
         send(200, buildChoiceStats($sceneID, countChoicesForScene($sceneID)));
     }
 
+    // GET /stats/midgame?reason=Financial+Problems&sessionID=s123
+    // Powers the top-of-screen live SQL HUD AND the Halfway Checkpoint after Room 2
+    if ($method === 'GET' && $parts === ['stats', 'midgame']) {
+        $reason = $_GET['reason'] ?? 'Unreasonable Behaviour';
+        $sessionID = $_GET['sessionID'] ?? null;
+
+        $payload = [
+            'spotlight' => midgameReasonSpotlight($reason),
+            'sql_facts' => hubSqlFacts(),
+        ];
+
+        mongo();
+        $payload['community'] = getCommunityPulse();
+
+        if ($sessionID) {
+            $session = getSession($sessionID);
+            if ($session) {
+                $scores = tallyChoices($session['choices'] ?? []);
+                $payload['session_so_far'] = [
+                    'choices_made' => count($session['choices'] ?? []),
+                    'scores'       => $scores,
+                    'top_reason'   => array_key_first($scores),
+                    'flags'        => $session['flags'] ?? [],
+                ];
+            }
+        }
+        send(200, $payload);
+    }
+
+    // GET /stats/hub
+    // Powers the live SQL + MongoDB pulse bar at the bottom of the Room Selection screen
+    if ($method === 'GET' && $parts === ['stats', 'hub']) {
+        mongo();
+        send(200, [
+            'sql'       => hubSqlFacts(),
+            'community' => getCommunityPulse(),
+        ]);
+    }
+
     // POST /choices   body: {"sessionID": "...", "choiceID": "r2_02", "sceneID": "r2_s1"}
     // Saves the choice and returns the next scene. room_done is true when the next
     // scene is an ending. The session stays open until /sessions/{id}/complete.

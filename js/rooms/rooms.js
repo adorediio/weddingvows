@@ -82,6 +82,7 @@ function showRoomChoices() {
 
     // Apply the locked look to the cards
     refreshLocks();
+    if (typeof window.loadHubPulse === 'function') window.loadHubPulse();
 }
 
 //function enterRoom(id) {

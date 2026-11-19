@@ -61,6 +61,12 @@
 .storyChoice:disabled { cursor: default; opacity: 0.45; }
 .storyChoice.chosen:disabled { opacity: 1; background: rgba(224,80,90,0.28); border-color: #e0505a; }
 
+/* What other players chose (shown after a choice is saved) */
+.storyStats { margin-top: 1.2rem; padding-left: 1rem; border-left: 3px solid #d98a94; animation: textIn 0.6s ease both; }
+.storyStatsLabel { margin: 0 0 0.3rem; font-size: 0.85rem; font-style: italic; opacity: 0.75; }
+.storyStatsLine { margin: 0 0 0.4rem; font-size: 1.1rem; line-height: 1.5; }
+.storyContinue { text-align: center; }
+
 /* Endings */
 .storyEnding { border-left: 3px solid var(--tone, #d98a94); padding-left: 1.1rem; }
 .tone-hopeful { --tone: #9fd3b0; }
@@ -97,12 +103,39 @@
 .bar.mine .barFill { background: #e0505a; }
 .bar.mine .barLabel { font-weight: bold; }
 .barValue { text-align: right; font-size: 0.95rem; }
+/* Escalation ladder (warning signs) */
+.ladderList { list-style: none; margin: 1rem 0 0; padding: 0 0 0 1.1rem; border-left: 2px solid rgba(251,240,236,0.25); }
+.rung { position: relative; margin: 0 0 1rem; padding: 0.8rem 1rem; border-radius: 10px;
+    background: rgba(251,240,236,0.04); border: 1px solid rgba(251,240,236,0.12); opacity: 0.55; }
+.rung::before { content: ''; position: absolute; left: calc(-1.1rem - 7px); top: 1.15rem; width: 12px; height: 12px;
+    border-radius: 50%; background: #1d1118; border: 2px solid rgba(251,240,236,0.4); }
+.rung.lit { opacity: 1; background: rgba(224,80,90,0.14); border-color: #e0505a; }
+.rung.lit::before { background: #e0505a; border-color: #e0505a; box-shadow: 0 0 10px #e0505a; }
+.rungHead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.2rem 1rem; }
+.rungTitle { font-size: 1.15rem; }
+.rungState { font-size: 0.8rem; font-style: italic; opacity: 0.8; }
+.rung.lit .rungState { color: #f2b8c0; opacity: 1; }
+.rungBlurb { margin: 0.3rem 0 0.5rem; line-height: 1.5; opacity: 0.9; }
+.rungReason { margin: 0 0 0.3rem; font-size: 0.95rem; font-weight: bold; }
+.rungFact { margin: 0.15rem 0; font-size: 0.92rem; line-height: 1.5; opacity: 0.9; }
+
 .dashSource { margin: 1.4rem 0 0; font-size: 0.85rem; opacity: 0.65; }
 
 @media (max-width: 600px) {
     .bar { grid-template-columns: 1fr 3.5rem; }
     .barLabel { grid-column: 1 / -1; }
     .barTrack { grid-column: 1; }
+}
+
+/* Personal start (age group picker and comparison) */
+.ageGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 0.65rem; }
+.ageGrid .storyChoice { text-align: center; }
+.ageBars { margin: 0.4rem 0 1rem; }
+.warnCard .bar { grid-template-columns: 5.5rem 1fr 3.5rem; }
+.warnCard .dashSource { margin: 1rem 0 0; }
+@media (max-width: 600px) {
+    .ageGrid { grid-template-columns: repeat(2, 1fr); }
+    .warnCard .barLabel, .warnCard .barTrack { grid-column: auto; }
 }
 
 /* Content warning, shown before the doors */

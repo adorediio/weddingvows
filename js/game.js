@@ -27,14 +27,15 @@
         roomId: null,
         sceneID: null,
         tensionPoints: 0,
-        busy: false
+        busy: false,
+        profile: null          // { age_group } from the personal start, or null if skipped
     };
     const roomCache = {};
 
     // Sound effects played by scenes ("sfx" in the room JSON). Put your files in /audio
     // and change the file names here. A missing file is skipped (one console warning).
     const SFX_FILES = {
-        shouting:       'audio/arguement.mp4',      // the two of them arguing
+        shouting:       'audio/argument.mp4',      // the two of them arguing
         glass_break:    'audio/glassbreaking.mp3',
         scream:         'audio/womanscreaming.mp3',
         man_scream:     'audio/menscreaming.mp3',
@@ -77,10 +78,12 @@
     async function ensureSession() {
         if (game.sessionID) return game.sessionID;
         const tag = Math.random().toString(36).slice(2, 8);
-        const player = await api('POST', '/players', {
+        const newPlayer = {
             username: 'guest_' + tag,
             email: 'guest_' + tag + '@wedding.local'
-        });
+        };
+        if (game.profile) newPlayer.age_group = game.profile.age_group;
+        const player = await api('POST', '/players', newPlayer);
         const session = await api('POST', '/sessions', { playerID: player.playerID });
         game.sessionID = session.sessionID;
         return game.sessionID;
@@ -244,6 +247,7 @@
             b.addEventListener('click', function () {
                 setSound(opt[1]);
                 wrap.remove();
+                showPersonalStart();
             });
             actions.appendChild(b);
         });
@@ -251,6 +255,115 @@
         wrap.appendChild(card);
         document.body.appendChild(wrap);
         actions.firstChild.focus({ preventScroll: true });
+    }
+
+    // ---------- personal start (pick an age group, see how it compares) ----------
+
+    function ageDirection(steps, medianGroup) {
+        if (steps === 0) return 'The typical (median) divorcing person is in your age group.';
+        const n = Math.abs(steps);
+        return 'The typical (median) divorcing person is in the ' + medianGroup + ' group, ' +
+            n + (n === 1 ? ' age group ' : ' age groups ') + (steps < 0 ? 'older' : 'younger') + ' than yours.';
+    }
+
+    function renderComparison(card, d) {
+        card.replaceChildren();
+        const title = el('h1', 'warnTitle', 'You, and the figures');
+        title.id = 'warnTitle';
+        card.appendChild(title);
+
+        const a = d.age;
+        const women = a.by_gender.find(function (g) { return g.gender === 'Female'; });
+        const men = a.by_gender.find(function (g) { return g.gender === 'Male'; });
+
+        card.appendChild(el('p', null,
+            'In ' + d.year + ', ' + a.count.toLocaleString() + ' people aged ' + d.age_group + ' divorced in Singapore. ' +
+            'That is ' + percent(a.percent) + ' of everyone who divorced, the number ' + a.rank + ' age group out of ' +
+            a.of_groups + (women && men ? '. ' + percent(women.percent) + ' were women and ' + percent(men.percent) + ' were men.' : '.')));
+        card.appendChild(el('p', null, ageDirection(a.steps_from_median, a.median_group)));
+
+        // Mini bars: who divorced, by age group, with the player's group marked
+        const max = Math.max.apply(null, a.groups.map(function (g) { return g.percent; }).concat([1]));
+        const bars = el('div', 'ageBars');
+        a.groups.forEach(function (g) {
+            const row = el('div', 'bar' + (g.age_group === d.age_group ? ' mine' : ''));
+            row.appendChild(el('span', 'barLabel', g.age_group));
+            const track = el('span', 'barTrack');
+            const fill = el('span', 'barFill');
+            fill.style.width = (g.percent / max * 100) + '%';
+            track.appendChild(fill);
+            row.appendChild(track);
+            row.appendChild(el('span', 'barValue', percent(g.percent)));
+            bars.appendChild(row);
+        });
+        card.appendChild(bars);
+
+        if (d.duration && d.duration.median_label) {
+            card.appendChild(el('p', null,
+                'How long had these marriages lasted? The typical (median) one that ended in divorce was in the ' +
+                d.duration.median_label.toLowerCase() + ' group' +
+                (d.duration.under5_percent !== null ? ', and ' + percent(d.duration.under5_percent) + ' ended within five years.' : '.')));
+        }
+        card.appendChild(el('p', 'dashSource',
+            'These count the people who divorced. They are not the chance that any one person will. ' +
+            'Source: Singapore Department of Statistics (SingStat).'));
+
+        const go = el('button', 'storyChoice endingBtn', 'Open the doors');
+        go.type = 'button';
+        go.addEventListener('click', function () { card.parentNode.remove(); });
+        card.appendChild(go);
+        go.focus({ preventScroll: true });
+    }
+
+    // Optional. If the API is down this is skipped and the game starts as before.
+    async function showPersonalStart() {
+        let groups;
+        try {
+            groups = (await api('GET', '/stats/age-groups')).age_groups;
+        } catch (e) {
+            console.warn('Personal start skipped:', e.message);
+            return;
+        }
+        if (!groups || !groups.length) return;
+
+        const wrap = el('div', 'warn');
+        wrap.setAttribute('role', 'dialog');
+        wrap.setAttribute('aria-modal', 'true');
+        wrap.setAttribute('aria-labelledby', 'warnTitle');
+        const card = el('div', 'warnCard');
+        const title = el('h1', 'warnTitle', 'Before the doors');
+        title.id = 'warnTitle';
+        card.appendChild(title);
+        card.appendChild(el('p', null,
+            'Which age group are you in? You will see how it compares with divorces in Singapore. ' +
+            'This is optional. If you pick one, only the age group is saved with your anonymous guest session.'));
+
+        const grid = el('div', 'ageGrid');
+        groups.forEach(function (g) {
+            const b = el('button', 'storyChoice', g);
+            b.type = 'button';
+            b.addEventListener('click', async function () {
+                grid.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
+                game.profile = { age_group: g };
+                try {
+                    renderComparison(card, await api('GET', '/stats/profile?age_group=' + encodeURIComponent(g)));
+                } catch (e) {
+                    console.warn('Comparison unavailable:', e.message);
+                    wrap.remove();   // the profile is still kept, the story just starts
+                }
+            });
+            grid.appendChild(b);
+        });
+        card.appendChild(grid);
+
+        const skip = el('button', 'storyChoice', 'Skip');
+        skip.type = 'button';
+        skip.addEventListener('click', function () { wrap.remove(); });
+        card.appendChild(skip);
+
+        wrap.appendChild(card);
+        document.body.appendChild(wrap);
+        grid.firstChild.focus({ preventScroll: true });
     }
 
     // ---------- entering a room and playing scenes ----------
@@ -328,6 +441,7 @@
 
         // The API decides the next scene. If it cannot be reached, the room file is used.
         let next = choice.next;
+        let saved = false;
         try {
             await ensureSession();
             const res = await api('POST', '/choices', {
@@ -336,14 +450,75 @@
                 sceneID: game.sceneID
             });
             next = res.next_scene || next;
+            saved = true;
         } catch (e) {
             game.offline = true;
             console.warn('API unavailable, continuing from the room file:', e.message);
         }
 
-        await wait(450);
+        // "What other players chose": only after the choice is saved, so the player's own pick
+        // is already counted. A scene can opt out with "stats": false in its room file.
+        const scene = game.room.scenes[game.sceneID];
+        const stats = saved && scene.stats !== false ? await fetchChoiceStats(game.sceneID) : null;
+        const line = stats ? describeStats(scene, stats, choice.id) : null;
+
+        if (line) {
+            await showStatsAndWait(list, line);
+        } else {
+            await wait(450);
+        }
         game.busy = false;
         renderScene(next);
+    }
+
+    // ---------- what other players chose ----------
+
+    // Never blocks the story: any failure just means no statistics are shown.
+    async function fetchChoiceStats(sceneID) {
+        try {
+            const data = await api('GET', '/stats/choices?sceneID=' + encodeURIComponent(sceneID));
+            return data.enough ? data : null;   // too few players for a percentage to mean anything
+        } catch (e) {
+            console.warn('Choice statistics unavailable:', e.message);
+            return null;
+        }
+    }
+
+    // "62% matched his volume, 31% walked away"
+    // Uses the optional "recap" of a choice (past tense, in the room file); falls back to its label.
+    function describeStats(scene, stats, pickedID) {
+        const parts = scene.choices
+            .map(function (c) {
+                const s = stats.choices[c.id];
+                return { id: c.id, percent: s ? s.percent : 0, text: c.recap || ('chose \u201c' + c.label + '\u201d') };
+            })
+            .filter(function (r) { return r.percent > 0; })
+            .sort(function (a, b) { return b.percent - a.percent; });
+        if (parts.length === 0) return null;
+
+        const top = parts.slice(0, 2);
+        const sentence = top.map(function (r) { return r.percent + '% ' + r.text; });
+        const mine = parts.find(function (r) { return r.id === pickedID; });
+        if (mine && !top.includes(mine)) {
+            sentence.push(mine.percent + '% chose what you did');
+        }
+        return sentence.join(', ');
+    }
+
+    // Shows the line under the choices and resolves when the player presses Continue.
+    function showStatsAndWait(list, line) {
+        return new Promise(function (resolve) {
+            const box = el('div', 'storyStats');
+            box.setAttribute('role', 'status');
+            box.appendChild(el('p', 'storyStatsLabel', 'What other players chose'));
+            box.appendChild(el('p', 'storyStatsLine', line));
+            const go = el('button', 'storyChoice storyContinue', 'Continue');
+            go.type = 'button';
+            go.addEventListener('click', resolve, { once: true });
+            box.appendChild(go);
+            list.after(box);
+            go.focus({ preventScroll: true });
+        });
     }
 
     function renderEnding(scene) {
@@ -426,6 +601,60 @@
         return Number(n).toFixed(1) + '%';
     }
 
+    // The sentences shown under a rung. Duration labels come from the database ("Under 5 Years").
+    function rungFacts(o, r) {
+        const facts = [];
+        if (r.national) {
+            facts.push('In ' + o.year + ', ' + percent(r.national.percent) + ' of divorces in Singapore (' +
+                r.national.count.toLocaleString() + ') cited it, the number ' + r.national.rank + ' reason.');
+        }
+        if (r.trend && r.trend.from_year !== r.trend.to_year) {
+            const dir = r.trend.to_count > r.trend.from_count ? 'Up' :
+                        r.trend.to_count < r.trend.from_count ? 'Down' : 'Unchanged';
+            facts.push(dir + ' from ' + r.trend.from_count.toLocaleString() + ' in ' + r.trend.from_year +
+                ' to ' + r.trend.to_count.toLocaleString() + ' in ' + r.trend.to_year + '.');
+        }
+        if (r.peak_duration) {
+            facts.push('Most often in marriages of ' + r.peak_duration.label.toLowerCase() + ' (' +
+                percent(r.peak_duration.share) + ' of these divorces).');
+        }
+        return facts;
+    }
+
+    function buildLadder(o) {
+        const section = el('section', 'ladder');
+        const reached = o.ladder.filter(function (r) { return r.lit; });
+
+        section.appendChild(el('h3', 'dashHead', 'Warning signs: the escalation ladder'));
+        section.appendChild(el('p', 'dashText',
+            'Arguments rarely jump to the top. They climb. Your story reached ' + reached.length + ' of ' +
+            o.ladder.length + ' rungs. Beside each is the divorce reason that comes closest to it, with the figures from Singapore.'));
+
+        // Highest rung on top, like a ladder seen from the side
+        const list = el('ol', 'ladderList');
+        o.ladder.slice().reverse().forEach(function (r) {
+            const li = el('li', 'rung' + (r.lit ? ' lit' : ''));
+
+            const head = el('div', 'rungHead');
+            head.appendChild(el('span', 'rungTitle', r.title));
+            head.appendChild(el('span', 'rungState', r.lit ? 'Your story reached this' : 'Not reached'));
+            li.appendChild(head);
+
+            li.appendChild(el('p', 'rungBlurb', r.blurb));
+            li.appendChild(el('p', 'rungReason', 'Closest divorce reason: ' + r.reason));
+            rungFacts(o, r).forEach(function (f) { li.appendChild(el('p', 'rungFact', f)); });
+            list.appendChild(li);
+        });
+        section.appendChild(list);
+
+        section.appendChild(el('p', 'dashSource',
+            'Reasons are what couples recorded when they divorced. Matching a behaviour to a reason is a guide, not a diagnosis.'));
+
+        // If the story reached the top rung, put the helplines right there
+        if (o.ladder[o.ladder.length - 1].lit) section.appendChild(buildSupport());
+        return section;
+    }
+
     function renderDashboard(o) {
         story.body.replaceChildren();
         const wrap = el('div', 'dash');
@@ -436,6 +665,9 @@
         wrap.appendChild(el('p', 'dashLead',
             'This is not a prediction. It shows how often couples in Singapore gave each reason when they divorced in ' +
             o.year + '.'));
+
+        // The escalation ladder: the rungs this story reached, each with its SQL figures
+        if (o.ladder && o.ladder.length) wrap.appendChild(buildLadder(o));
 
         // Themes the player met
         const themes = Object.entries(o.scores || {});

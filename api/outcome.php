@@ -21,5 +21,6 @@ function buildOutcome(array $choices, ?int $year = null): array{
             'main_reason' => $mainReason,
         'national_match' => $match,  // count, rank, percent for the main reason
         'national_top3'  => array_slice($national, 0, 3), // the three most common reasons in Singapore
+        'ladder'         => buildLadder($choices, $year, $national), // warning-signs rungs, lit or not
         ];
 }

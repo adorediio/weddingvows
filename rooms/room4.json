@@ -8,7 +8,7 @@
       "text": "“Why did you take my phone?” you say. He holds it up. “Why are THESE on it?” His voice keeps climbing, and the kitchen seems to shrink around it.",
       "choices": [
         {
-          "id": "r4_01",
+          "id": "r4_01", "recap": "matched his volume",
           "label": "Match his volume",
           "reason": "Unreasonable Behaviour",
           "weight": 1,
@@ -16,7 +16,7 @@
           "next": "r4_s2a"
         },
         {
-          "id": "r4_02",
+          "id": "r4_02", "recap": "kept their voice low and asked him to stop",
           "label": "Keep your voice low and ask him to stop",
           "reason": null,
           "weight": 0,
@@ -24,7 +24,7 @@
           "next": "r4_s2b"
         },
         {
-          "id": "r4_03",
+          "id": "r4_03", "recap": "walked into another room",
           "label": "Walk into another room",
           "reason": null,
           "weight": 0,

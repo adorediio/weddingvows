@@ -17,18 +17,26 @@ function getDb() {
     return $db;
 }
 
-function createPlayer(string $username, string $email): string {
+function createPlayer(string $username, string $email, ?string $ageGroup = null): string {
     $players = getDb()->players;
     if ($players->findOne(['username' => $username])) {
         throw new Exception('Username already exists');
     }
     $playerID = 'p' . uniqid();
-    $players->insertOne([
+    $player = [
         'playerID'   => $playerID,
         'username'   => $username,
         'email'      => $email,
         'created_at' => new UTCDateTime(),
-    ]);
+    ];
+    // The "personal start" profile. Only an age group is kept, never an exact age.
+    if ($ageGroup !== null) {
+        $player['profile'] = [
+            'age_group' => $ageGroup,
+            'set_at'    => new UTCDateTime(),
+        ];
+    }
+    $players->insertOne($player);
     return $playerID;
 }
 
@@ -134,4 +142,28 @@ function getLatestSession(string $playerID, bool $unfinishedOnly = false): ?arra
         $filter,
         array_merge(TYPE_MAP, ['sort' => ['started_at' => -1]])
     );
+}
+
+
+/**
+ * How every player answered one scene, across all sessions.
+ * Returns [choiceID => count] for the choices that were picked at least once,
+ * e.g. ['r4_01' => 12, 'r4_03' => 5].
+ *
+ * $unwind turns each session's choices array into one row per choice,
+ * $match keeps only this scene, $group counts the rows per choiceID.
+ */
+function countChoicesForScene(string $sceneID): array {
+    $cursor = getDb()->game_sessions->aggregate([
+        ['$match'  => ['choices.sceneID' => $sceneID]],   // lets an index skip unrelated sessions
+        ['$unwind' => '$choices'],
+        ['$match'  => ['choices.sceneID' => $sceneID]],   // drop the other choices of those sessions
+        ['$group'  => ['_id' => '$choices.choiceID', 'count' => ['$sum' => 1]]],
+    ], TYPE_MAP);
+
+    $counts = [];
+    foreach ($cursor as $row) {
+        $counts[$row['_id']] = (int) $row['count'];
+    }
+    return $counts;
 }

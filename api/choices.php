@@ -66,3 +66,41 @@ function tallyChoices(array $choices): array {
     arsort($scores); // highest points first
     return $scores;
 }
+
+// All choiceIDs that belong to one scene (empty list when the scene does not exist).
+function choiceIDsForScene(string $sceneID): array {
+    $ids = [];
+    foreach (loadChoiceRules() as $id => $rule) {
+        if ($rule['scene'] === $sceneID) {
+            $ids[] = $id;
+        }
+    }
+    return $ids;
+}
+ 
+// Turns raw counts into percentages. Every choice of the scene is listed, even with 0 picks.
+// "enough" is false while too few people have played for a percentage to mean anything.
+const MIN_STAT_SAMPLE = 5;
+ 
+function buildChoiceStats(string $sceneID, array $counts): array {
+    $ids   = choiceIDsForScene($sceneID);
+    $total = 0;
+    foreach ($ids as $id) {
+        $total += $counts[$id] ?? 0;
+    }
+ 
+    $choices = [];
+    foreach ($ids as $id) {
+        $n = $counts[$id] ?? 0;
+        $choices[$id] = [
+            'count'   => $n,
+            'percent' => $total > 0 ? (int) round($n / $total * 100) : 0,
+        ];
+    }
+    return [
+        'sceneID' => $sceneID,
+        'total'   => $total,
+        'enough'  => $total >= MIN_STAT_SAMPLE,
+        'choices' => $choices,
+    ];
+}

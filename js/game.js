@@ -30,6 +30,23 @@
         busy: false
     };
     const roomCache = {};
+
+    // Sound effects played by scenes ("sfx" in the room JSON). Put your files in /audio
+    // and change the file names here. A missing file is skipped (one console warning).
+    const SFX_FILES = {
+        shouting:       'audio/arguement.mp4',      // the two of them arguing
+        glass_break:    'audio/glassbreaking.mp3',
+        scream:         'audio/womanscreaming.mp3',
+        man_scream:     'audio/menscreaming.mp3',
+        // no file yet for these three: they are skipped until you add one
+        phone_buzz:     'audio/phone_buzz.mp3',
+        door_slam:      'audio/door_slam.mp3',
+        thrown_objects: 'audio/thrown_objects.mp3'
+    };
+    const sfxWarned = {};
+    const activeSfx = [];     // sounds still playing, so the next scene can fade them out
+    const sfxTimers = [];     // cues waiting on a delay
+    let soundOn = true;
     let story = null;          // { root, body } for the open story overlay
 
     // ---------- small helpers ----------
@@ -80,9 +97,47 @@
     // ---------- sound ----------
 
     function setSound(on) {
+        soundOn = on;
         [doorCreak, weddingSong, breathing, heartbeat].forEach(function (a) {
             if (a) a.muted = !on;
         });
+    }
+
+    // cue is "glass_break" or { id: "glass_break", delay: 700, volume: 0.8 }
+    function playSfx(cue) {
+        const item = typeof cue === 'string' ? { id: cue } : cue;
+        const file = SFX_FILES[item.id];
+        if (!soundOn || !file) return;
+        sfxTimers.push(setTimeout(function () {
+            const a = new Audio(file);
+            a.volume = item.volume !== undefined ? item.volume : 0.9;
+            activeSfx.push(a);
+            a.play().catch(function (e) {
+                if (!sfxWarned[item.id]) {
+                    sfxWarned[item.id] = true;
+                    console.warn('Sound effect not played (' + file + '):', e.message);
+                }
+            });
+        }, item.delay || 0));
+    }
+
+    // Fade out any scene sounds still playing and cancel ones still waiting on a delay,
+    // so a long clip never runs over the next scene
+    function stopSfx(ms) {
+        sfxTimers.splice(0).forEach(clearTimeout);
+        activeSfx.splice(0).forEach(function (a) {
+            if (!a.paused) fadeAudio(a, 0, ms || 400);
+        });
+    }
+
+    // Short screen shake and red flash for door slams, glass breaking, and so on
+    function flashImpact() {
+        if (reduceMotion || !story) return;
+        const root = story.root;
+        root.classList.remove('impact');
+        void root.offsetWidth;   // restart the animation
+        root.classList.add('impact');
+        setTimeout(function () { root.classList.remove('impact'); }, 700);
     }
 
     // Heartbeat speeds up and breathing gets louder as tension rises
@@ -111,6 +166,7 @@
     }
 
     function closeStory() {
+        stopSfx(300);
         if (story) {
             story.root.remove();
             story = null;
@@ -127,9 +183,14 @@
         story = { root: root, body: body };
     }
 
+    // Each room file sets its own "maxTension" (the highest total a player can reach)
+    function maxTension() {
+        return (game.room && game.room.maxTension) || MAX_TENSION_POINTS;
+    }
+
     function setTension(points) {
         game.tensionPoints = points;
-        const t = Math.min(1, points / MAX_TENSION_POINTS);
+        const t = Math.min(1, points / maxTension());
         if (story) {
             story.root.style.setProperty('--tension', t.toFixed(2));
             story.root.classList.toggle('shaking', t >= 0.8 && !reduceMotion);
@@ -226,6 +287,7 @@
             return;
         }
         game.sceneID = sceneID;
+        stopSfx(400);
         if (scene.ending) {
             renderEnding(scene);
             return;
@@ -248,6 +310,8 @@
         story.body.appendChild(list);
 
         text.focus({ preventScroll: true });
+        (scene.sfx || []).forEach(playSfx);
+        if (scene.impact) flashImpact();
         // choices fade in after the player has had a moment with the text
         setTimeout(function () {
             list.classList.add('show');
@@ -260,7 +324,7 @@
         list.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
         button.classList.add('chosen');
 
-        setTension(game.tensionPoints + (choice.tension || 0));
+        setTension(Math.max(0, game.tensionPoints + (choice.tension || 0)));
 
         // The API decides the next scene. If it cannot be reached, the room file is used.
         let next = choice.next;
@@ -287,7 +351,7 @@
 
         // hopeful endings calm the screen, dark ones peak it
         if (e.tone === 'hopeful') setTension(0);
-        if (e.tone === 'dark') setTension(MAX_TENSION_POINTS);
+        if (e.tone === 'dark') setTension(maxTension());
 
         story.body.replaceChildren();
         const wrap = el('div', 'storyEnding tone-' + e.tone);

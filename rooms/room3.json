@@ -1,10 +1,11 @@
 {
   "room": 3,
   "title": "Phone Discovery",
+  "maxTension": 7,
   "start": "r3_s1",
   "scenes": {
     "r3_s1": {
-      "text": "You come home to find him at the table with your phone in his hand. \"Who is this?\" On the screen are messages you never meant him to read.",
+      "text": "You come home late to find him at the kitchen table with your phone in his hand. The house is very quiet. “Who is this?” On the screen are messages you never meant him to read.",
       "choices": [
         {
           "id": "r3_01",
@@ -16,7 +17,7 @@
         },
         {
           "id": "r3_02",
-          "label": "\"They're just friends.\"",
+          "label": "“They’re just friends.”",
           "reason": "Adultery & Infidelity",
           "weight": 2,
           "tension": 1,
@@ -33,7 +34,7 @@
       ]
     },
     "r3_s2a": {
-      "text": "He is quiet. His jaw tightens, but he stays seated.",
+      "text": "He is quiet. His jaw tightens, but he stays seated. The clock over the stove is suddenly very loud.",
       "choices": [
         {
           "id": "r3_04",
@@ -41,7 +42,7 @@
           "reason": null,
           "weight": 0,
           "tension": 0,
-          "next": "r3_end_talk"
+          "next": "r3_s3a"
         },
         {
           "id": "r3_05",
@@ -49,12 +50,12 @@
           "reason": null,
           "weight": 0,
           "tension": 1,
-          "next": "r3_end_standoff"
+          "next": "r3_s3b"
         }
       ]
     },
     "r3_s2b": {
-      "text": "He scrolls. \"Friends don't write this.\" His voice is rising.",
+      "text": "He scrolls. “Friends don’t write this.” His voice is rising, and he is reading lines aloud now, one at a time.",
       "choices": [
         {
           "id": "r3_06",
@@ -62,7 +63,7 @@
           "reason": "Adultery & Infidelity",
           "weight": 1,
           "tension": 0,
-          "next": "r3_end_talk"
+          "next": "r3_s3a"
         },
         {
           "id": "r3_07",
@@ -70,12 +71,12 @@
           "reason": "Unreasonable Behaviour",
           "weight": 1,
           "tension": 2,
-          "next": "r3_end_boil"
+          "next": "r3_s3c"
         }
       ]
     },
     "r3_s2c": {
-      "text": "The phone hits the floor and the screen cracks. Neither of you moves.",
+      "text": "The phone hits the floor and the screen cracks. Neither of you moves. A thin line runs straight through the photo of the two of you.",
       "choices": [
         {
           "id": "r3_08",
@@ -83,15 +84,185 @@
           "reason": null,
           "weight": 0,
           "tension": 0,
-          "next": "r3_end_talk"
+          "next": "r3_s3a"
         },
         {
           "id": "r3_09",
-          "label": "\"Look what you made me do.\"",
+          "label": "“Look what you made me do.”",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 2,
+          "next": "r3_s3c"
+        }
+      ]
+    },
+    "r3_s3a": {
+      "text": "He asks to hear it all, from the beginning. Each answer you give lands like a coin dropped into a deep well. You wait for the sound of it hitting the bottom.",
+      "choices": [
+        {
+          "id": "r3_10",
+          "label": "Tell him everything",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_s4a"
+        },
+        {
+          "id": "r3_11",
+          "label": "Tell him only some of it",
+          "reason": "Adultery & Infidelity",
+          "weight": 1,
+          "tension": 1,
+          "next": "r3_s4b"
+        }
+      ]
+    },
+    "r3_s3b": {
+      "text": "He laughs once, short and flat. “Hiding? I am here every night. At this table.”",
+      "choices": [
+        {
+          "id": "r3_12",
+          "label": "Back down and apologise",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_s4a"
+        },
+        {
+          "id": "r3_13",
+          "label": "Press him about last Thursday",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r3_s4c"
+        }
+      ]
+    },
+    "r3_s3c": {
+      "text": "He picks the phone up again and reads a line aloud in a mocking voice. Then another. The kitchen is too small for the volume.",
+      "sfx": [
+        "shouting"
+      ],
+      "choices": [
+        {
+          "id": "r3_14",
+          "label": "Tell him to stop",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r3_s4c"
+        },
+        {
+          "id": "r3_15",
+          "label": "Walk out of the room",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_s4d"
+        },
+        {
+          "id": "r3_16",
+          "label": "Grab for the phone again",
           "reason": "Unreasonable Behaviour",
           "weight": 1,
           "tension": 2,
           "next": "r3_end_boil"
+        }
+      ]
+    },
+    "r3_s4a": {
+      "text": "The silence afterwards is the longest one yet. Then: “I need to sleep in the other room tonight.”",
+      "choices": [
+        {
+          "id": "r3_17",
+          "label": "Ask him to stay and keep talking",
+          "reason": null,
+          "weight": 0,
+          "tension": -1,
+          "next": "r3_end_talk"
+        },
+        {
+          "id": "r3_18",
+          "label": "Let him go",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_end_apart"
+        }
+      ]
+    },
+    "r3_s4b": {
+      "text": "He notices the gaps the way he notices a wobbling chair. “You’re leaving things out.”",
+      "choices": [
+        {
+          "id": "r3_19",
+          "label": "Tell him the rest",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_s4a"
+        },
+        {
+          "id": "r3_20",
+          "label": "Say “That’s all there is.”",
+          "reason": "Adultery & Infidelity",
+          "weight": 1,
+          "tension": 1,
+          "next": "r3_s4c"
+        }
+      ]
+    },
+    "r3_s4c": {
+      "text": "His palm comes down on the table. The cups jump. The sound fills the whole house, and you realise you have stopped breathing.",
+      "sfx": [
+        "shouting"
+      ],
+      "impact": true,
+      "choices": [
+        {
+          "id": "r3_21",
+          "label": "Flinch and say nothing",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r3_s4d"
+        },
+        {
+          "id": "r3_22",
+          "label": "Raise your voice back",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 2,
+          "next": "r3_end_boil"
+        },
+        {
+          "id": "r3_23",
+          "label": "“I need you to lower your voice.”",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r3_end_standoff"
+        }
+      ]
+    },
+    "r3_s4d": {
+      "text": "Down the hall, a small door opens an inch. One of the children is awake, and listening.",
+      "choices": [
+        {
+          "id": "r3_24",
+          "label": "Go to the child and close the door gently",
+          "reason": null,
+          "weight": 0,
+          "tension": -1,
+          "next": "r3_end_apart"
+        },
+        {
+          "id": "r3_25",
+          "label": "Stay where you are and keep your voice low",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_end_standoff"
         }
       ]
     },
@@ -103,8 +274,16 @@
         "tone": "hopeful"
       }
     },
+    "r3_end_apart": {
+      "text": "He takes a pillow down the hall. The door closes without a slam, which is its own kind of sound.",
+      "choices": [],
+      "ending": {
+        "title": "The other room",
+        "tone": "uneasy"
+      }
+    },
     "r3_end_standoff": {
-      "text": "You each retreat to your own side of the room. The phone sits face down between you.",
+      "text": "You each retreat to your own side of the room. The phone sits face down between you, cracked.",
       "choices": [],
       "ending": {
         "title": "Standoff",
@@ -112,7 +291,7 @@
       }
     },
     "r3_end_boil": {
-      "text": "He stands up too fast and the chair scrapes back. \"We're not done,\" he says, and the room goes very still.",
+      "text": "He stands up too fast and the chair scrapes back. “We’re not done,” he says, and the room goes very still.",
       "choices": [],
       "ending": {
         "title": "Boiling point",

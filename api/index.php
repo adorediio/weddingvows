@@ -43,47 +43,75 @@ if ($method === 'OPTIONS'){
 
 // "/stats/reasons?year=2025" becomes ['stats', 'reasons']
 $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-$parts = $path == '' ? [] : explode('/', $path);
+
+// Also works when the API sits in a subfolder, e.g. XAMPP:
+// /weddingvows/api/index.php/health  ->  'health'
+$base = trim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
+if ($base !== '' && strpos($path, $base) === 0) {
+    $path = trim(substr($path, strlen($base)), '/');
+}
+if (strpos($path, 'index.php') === 0) {
+    $path = trim(substr($path, strlen('index.php')), '/');
+}
+$parts = $path === '' ? [] : explode('/', $path);
 
 try {
     // To get the health of the website
-    if($method === 'GET' && $parts === ['health']){
+    if ($method === 'GET' && $parts === ['health']) {
         send(200, ['status' => 'ok']);
     }
+
     // To get /stats/reasons?year=2025
-        if($method === 'GET' && $parts === ['stats', 'reasons']){
-            $year = isset ($_GET['year']) ? (int) $_GET['year'] : latestYear();
-            send(200, ['year' => $year, 'reasons' => reasonStats($year)]);
+    if ($method === 'GET' && $parts === ['stats', 'reasons']) {
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : latestYear();
+        send(200, ['year' => $year, 'reasons' => reasonStats($year)]);
     }
+
     // To get /stats/age?year=2025
     if ($method === 'GET' && $parts === ['stats', 'age']) {
         $year = isset($_GET['year']) ? (int) $_GET['year'] : latestYear();
         send(200, ['year' => $year, 'ages' => ageStats($year)]);
     }
 
-    // Saves the choices, decides the next scene and returns the outcome when story ends
-    if ($method === 'POST' && $parts === ['choices']){
+    // POST /choices   body: {"sessionID": "...", "choiceID": "r2_02", "sceneID": "r2_s1"}
+    // Saves the choice and returns the next scene. room_done is true when the next
+    // scene is an ending. The session stays open until /sessions/{id}/complete.
+    if ($method === 'POST' && $parts === ['choices']) {
         mongo();
         $data = body();
         need($data, ['sessionID', 'choiceID', 'sceneID']);
+
         $rule = getChoiceRule($data['choiceID']);
-        // if rule is empty
-        if ($rule === NULL){
+        if ($rule === null) {
             send(400, ['error' => 'Unknown choiceID']);
         }
-        $next = $rule['next'];
-        saveChoice($data['sessionID'], $data['choiceID'], $data['sceneID'], $next ?? $data['sceneID']);
-        $result = ['saved' => true, 'next_scene' => $next, 'finished' => $next === null];
-        // if next choice is empty
-        if ($next === null) {
-            completeSession($data['sessionID']);
-            $session = getSession($data['sessionID']);
-            $result['outcome'] = buildOutcome($session['choices']);
+        if ($rule['scene'] !== $data['sceneID']) {
+            send(400, ['error' => 'This choice does not belong to that scene']);
         }
-        send(200, $result);
+
+        saveChoice($data['sessionID'], $data['choiceID'], $data['sceneID'], $rule['next']);
+        send(200, [
+            'saved'      => true,
+            'next_scene' => $rule['next'],
+            'room_done'  => $rule['room_done']
+        ]);
     }
 
-    if ($method === 'POST' && $parts === ['sessions']){
+    // POST /sessions/{sessionID}/complete
+    // Called once, when every room has been finished (showEnding). Closes the
+    // session and returns the outcome that links the choices to the SQL statistics.
+    if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'complete') {
+        mongo();
+        $session = getSession($parts[1]);
+        if (!$session) {
+            send(404, ['error' => 'Session not found']);
+        }
+        completeSession($parts[1]);   // does nothing if it was already completed
+        send(200, ['finished' => true, 'outcome' => buildOutcome($session['choices'])]);
+    }
+
+    // POST /sessions   body: {"playerID": "..."}
+    if ($method === 'POST' && $parts === ['sessions']) {
         mongo();
         $data = body();
         need($data, ['playerID']);
@@ -109,8 +137,8 @@ try {
     }
 
     // No route match
-    send(404, ['error'=>'Route not found']);
+    send(404, ['error' => 'Route not found']);
 
-} catch (exception $e){ //Server error
+} catch (Throwable $e) { // Server error
     send(500, ['error' => $e->getMessage()]);
 }

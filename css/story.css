@@ -1,0 +1,104 @@
+/* =====================================================
+   STORY (room scenes, endings, support, dashboard, content warning)
+   Same Georgia serif as the room cards. The one memorable thing is the
+   red vignette, which fills with the --tension value set from game.js.
+   ===================================================== */
+
+.story { --tension: 0; position: fixed; inset: 0; z-index: 20; display: flex;
+    flex-direction: column; overflow-y: auto; color: #fbf0ec;
+    font-family: Georgia, 'Times New Roman', serif;
+    background: linear-gradient(to top, rgba(29,17,24,0.93) 0%, rgba(29,17,24,0.6) 55%, rgba(29,17,24,0.25) 100%); }
+
+.storyVignette { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, #8c1223 100%);
+    opacity: calc(0.1 + var(--tension) * 0.8); transition: opacity 0.8s ease; }
+
+/* margin-top:auto keeps the text at the bottom without cutting off tall content */
+.storyBody { position: relative; z-index: 1; margin-top: auto; width: min(40rem, 100%);
+    align-self: center; padding: 2rem 1.25rem 2.5rem; box-sizing: border-box; }
+
+.storyRoomName { margin: 0 0 0.6rem; font-size: 0.95rem; font-style: italic; opacity: 0.75; }
+
+.storyText { margin: 0 0 1.4rem; font-size: clamp(1.15rem, 2.4vw, 1.5rem); line-height: 1.65;
+    text-shadow: 0 1px 12px rgba(0,0,0,0.6); animation: textIn 0.6s ease both; }
+.storyText:focus, .endingTitle:focus, .dashTitle:focus { outline: none; }
+@keyframes textIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Text trembles slightly once tension is high */
+.story.shaking .storyText { animation: textIn 0.6s ease both, tremble 0.16s linear infinite; }
+@keyframes tremble {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(0.6px, -0.4px); }
+    50% { transform: translate(-0.5px, 0.5px); }
+    75% { transform: translate(0.4px, 0.3px); }
+}
+
+/* Choices */
+.storyChoices { opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+.storyChoices.show { opacity: 1; pointer-events: auto; }
+
+.storyChoice { display: block; width: 100%; margin-top: 0.65rem; padding: 0.9rem 1.1rem;
+    box-sizing: border-box; text-align: left; font: inherit; font-size: 1.05rem; color: #fbf0ec;
+    background: rgba(251,240,236,0.08); border: 1px solid rgba(251,240,236,0.45);
+    border-radius: 10px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+.storyChoice:hover:not(:disabled) { background: rgba(251,240,236,0.18); border-color: #fbf0ec; }
+.storyChoice:focus-visible { outline: 2px solid #f2b8c0; outline-offset: 3px; }
+.storyChoice:disabled { cursor: default; opacity: 0.45; }
+.storyChoice.chosen:disabled { opacity: 1; background: rgba(224,80,90,0.28); border-color: #e0505a; }
+
+/* Endings */
+.storyEnding { border-left: 3px solid var(--tone, #d98a94); padding-left: 1.1rem; }
+.tone-hopeful { --tone: #9fd3b0; }
+.tone-uneasy { --tone: #e6c27a; }
+.tone-dark { --tone: #e0505a; }
+.endingTitle { margin: 0 0 0.8rem; font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: normal; line-height: 1.2; }
+.endingBtn { margin-top: 1.5rem; text-align: center; }
+
+/* Support */
+.support { margin: 1.6rem 0 0; padding: 1.1rem 0 0; border-top: 1px solid rgba(251,240,236,0.3); }
+.supportTitle { margin: 0 0 0.3rem; font-size: 1.15rem; font-weight: normal; }
+.supportNote { margin: 0 0 0.8rem; opacity: 0.85; }
+.supportList { list-style: none; margin: 0; padding: 0; }
+.supportList li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline;
+    gap: 0.3rem 1rem; padding: 0.55rem 0; border-bottom: 1px solid rgba(251,240,236,0.15); }
+.supportNumber { color: #f2b8c0; font-size: 1.15rem; text-decoration: none; padding: 0.2rem 0; }
+.supportNumber:hover { text-decoration: underline; }
+.supportNumber:focus-visible { outline: 2px solid #f2b8c0; outline-offset: 3px; }
+
+/* Final dashboard */
+.story.dashMode { background: rgba(29,17,24,0.95); }
+.story.dashMode .storyVignette { display: none; }
+.story.dashMode .storyBody { margin-top: auto; margin-bottom: auto; width: min(44rem, 100%); }
+.dashTitle { margin: 0 0 0.6rem; font-size: clamp(1.7rem, 4.5vw, 2.6rem); font-weight: normal; line-height: 1.2; }
+.dashLead, .dashText { line-height: 1.6; margin: 0 0 1rem; }
+.dashLead { opacity: 0.85; }
+.dashHead { margin: 1.6rem 0 0.6rem; font-size: 1.1rem; font-weight: normal; font-style: italic; opacity: 0.8; }
+.dashThemes { margin: 0 0 1rem; padding-left: 1.2rem; line-height: 1.7; }
+.bar { display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr 4rem; align-items: center;
+    gap: 0.8rem; margin: 0.55rem 0; }
+.barLabel { font-size: 0.95rem; line-height: 1.3; }
+.barTrack { height: 0.8rem; background: rgba(251,240,236,0.12); border-radius: 0.4rem; overflow: hidden; }
+.barFill { display: block; height: 100%; background: #d98a94; border-radius: 0.4rem; }
+.bar.mine .barFill { background: #e0505a; }
+.bar.mine .barLabel { font-weight: bold; }
+.barValue { text-align: right; font-size: 0.95rem; }
+.dashSource { margin: 1.4rem 0 0; font-size: 0.85rem; opacity: 0.65; }
+
+@media (max-width: 600px) {
+    .bar { grid-template-columns: 1fr 3.5rem; }
+    .barLabel { grid-column: 1 / -1; }
+    .barTrack { grid-column: 1; }
+}
+
+/* Content warning, shown before the doors */
+.warn { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center;
+    justify-content: center; padding: 1.5rem; background: #1d1118; overflow-y: auto;
+    font-family: Georgia, 'Times New Roman', serif; color: #fbf0ec; }
+.warnCard { width: min(34rem, 100%); }
+.warnTitle { margin: 0 0 1rem; font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: normal; }
+.warnCard p { margin: 0 0 1rem; line-height: 1.65; font-size: 1.1rem; }
+.warnActions { margin-top: 1.5rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    .story *, .story, .warn * { animation: none !important; transition: none !important; }
+}

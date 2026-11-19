@@ -84,9 +84,9 @@ function showRoomChoices() {
     refreshLocks();
 }
 
-function enterRoom(id) {
-    console.log('Entering room', id);   // TODO: load each room's scene here
-}
+//function enterRoom(id) {
+    //console.log('Entering room', id);   // TODO: load each room's scene here
+//}
 
 function showEnding() {
     stopTension();

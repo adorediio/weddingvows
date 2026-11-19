@@ -1,0 +1,86 @@
+{
+  "room": 1,
+  "title": "Happy Family",
+  "start": "r1_s1",
+  "scenes": {
+    "r1_s1": {
+      "text": "Sunday morning. The pancakes are a little burnt, the kids are laughing, and he is humming off-key. It feels easy.",
+      "choices": [
+        {
+          "id": "r1_01",
+          "label": "Soak it in",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_s2a"
+        },
+        {
+          "id": "r1_02",
+          "label": "Notice the unopened bills by the door",
+          "reason": "Financial Problems",
+          "weight": 1,
+          "tension": 0,
+          "next": "r1_s2b"
+        }
+      ]
+    },
+    "r1_s2a": {
+      "text": "He pulls you into a hug and the kids pile on. Later, almost in passing, he says work has been slow.",
+      "choices": [
+        {
+          "id": "r1_03",
+          "label": "Ask how he really feels",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_open"
+        },
+        {
+          "id": "r1_04",
+          "label": "Let it go. It's Sunday.",
+          "reason": "Financial Problems",
+          "weight": 1,
+          "tension": 0,
+          "next": "r1_end_quiet"
+        }
+      ]
+    },
+    "r1_s2b": {
+      "text": "You open one envelope. The number is bigger than you expected, and he sees your face.",
+      "choices": [
+        {
+          "id": "r1_05",
+          "label": "Show him",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_open"
+        },
+        {
+          "id": "r1_06",
+          "label": "Hide it for now",
+          "reason": "Financial Problems",
+          "weight": 1,
+          "tension": 0,
+          "next": "r1_end_quiet"
+        }
+      ]
+    },
+    "r1_end_open": {
+      "text": "You go through it together at the kitchen table. It isn't fun, but neither of you is facing it alone.",
+      "choices": [],
+      "ending": {
+        "title": "Talking it out",
+        "tone": "hopeful"
+      }
+    },
+    "r1_end_quiet": {
+      "text": "The day stays warm. The envelope stays closed. Something small has been put away for later.",
+      "choices": [],
+      "ending": {
+        "title": "The quiet",
+        "tone": "uneasy"
+      }
+    }
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "room": 4,
+  "title": "Argument",
+  "start": "r4_s1",
+  "scenes": {
+    "r4_s1": {
+      "text": "\"Why did you take my phone?\" you say. He holds it up. \"Why are THESE on it?\" His voice keeps climbing.",
+      "choices": [
+        {
+          "id": "r4_01",
+          "label": "Match his volume",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r4_s2"
+        },
+        {
+          "id": "r4_02",
+          "label": "Keep your voice low and ask him to stop",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_s2b"
+        },
+        {
+          "id": "r4_03",
+          "label": "Walk into another room",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_end_apart"
+        }
+      ]
+    },
+    "r4_s2": {
+      "text": "The word he uses stings. Then another. Neither of you is really listening any more.",
+      "choices": [
+        {
+          "id": "r4_04",
+          "label": "Throw an insult back",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r4_s3"
+        },
+        {
+          "id": "r4_05",
+          "label": "\"I won't be spoken to like this.\"",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_end_cooloff"
+        }
+      ]
+    },
+    "r4_s2b": {
+      "text": "He hesitates. For a second it could go either way.",
+      "choices": [
+        {
+          "id": "r4_06",
+          "label": "Offer to talk again tomorrow",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_end_cooloff"
+        },
+        {
+          "id": "r4_07",
+          "label": "Say the one thing you know will hurt",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r4_s3"
+        }
+      ]
+    },
+    "r4_s3": {
+      "text": "He storms into the hallway. The door slams so hard the picture frames rattle.",
+      "choices": [
+        {
+          "id": "r4_08",
+          "label": "Follow him",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r4_s4"
+        },
+        {
+          "id": "r4_09",
+          "label": "Stay where you are. Breathe.",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_s4b"
+        }
+      ]
+    },
+    "r4_s4": {
+      "text": "In the next room something crashes. Glass. A drawer pulled out and thrown. This is no longer an argument, and you are standing in the doorway.",
+      "choices": [
+        {
+          "id": "r4_10",
+          "label": "Call for help",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 2,
+          "next": "r4_end_help"
+        },
+        {
+          "id": "r4_11",
+          "label": "Leave the house",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 2,
+          "next": "r4_end_leave"
+        },
+        {
+          "id": "r4_12",
+          "label": "Freeze",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 2,
+          "next": "r4_end_freeze"
+        }
+      ]
+    },
+    "r4_s4b": {
+      "text": "The crash comes from the next room. You are not in it, not yet. You can hear everything.",
+      "choices": [
+        {
+          "id": "r4_13",
+          "label": "Call for help",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 2,
+          "next": "r4_end_help"
+        },
+        {
+          "id": "r4_14",
+          "label": "Slip out through the front door",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 2,
+          "next": "r4_end_leave"
+        }
+      ]
+    },
+    "r4_end_apart": {
+      "text": "A door closes softly this time. The quiet is better than the shouting, but nothing has been settled.",
+      "choices": [],
+      "ending": {
+        "title": "Separate rooms",
+        "tone": "uneasy"
+      }
+    },
+    "r4_end_cooloff": {
+      "text": "He goes quiet. Neither of you has won, but it stopped. Now you have to decide what you will say in the morning.",
+      "choices": [],
+      "ending": {
+        "title": "Tomorrow",
+        "tone": "hopeful"
+      }
+    },
+    "r4_end_help": {
+      "text": "A voice on the line asks if you are safe. It is the first sensible question anyone has asked tonight.",
+      "choices": [],
+      "ending": {
+        "title": "Help arrives",
+        "tone": "dark",
+        "showSupport": true
+      }
+    },
+    "r4_end_leave": {
+      "text": "The night air is cold. You do not know where you are going yet. You only know you are not staying.",
+      "choices": [],
+      "ending": {
+        "title": "Out the door",
+        "tone": "dark",
+        "showSupport": true
+      }
+    },
+    "r4_end_freeze": {
+      "text": "Time stretches. Afterwards nothing in the house is where it was. Freezing is not a failure. It is what many people's bodies do.",
+      "choices": [],
+      "ending": {
+        "title": "Frozen",
+        "tone": "dark",
+        "showSupport": true
+      }
+    }
+  }
+}

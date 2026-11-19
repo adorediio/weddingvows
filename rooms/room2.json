@@ -1,0 +1,131 @@
+{
+  "room": 2,
+  "title": "Temptation",
+  "start": "r2_s1",
+  "scenes": {
+    "r2_s1": {
+      "text": "A friend's wedding reception. Across the room he is laughing with someone you don't know, standing a little too close. Your phone lights up in your hand: a message from an old colleague.",
+      "choices": [
+        {
+          "id": "r2_01",
+          "label": "Walk over and join them",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r2_s2a"
+        },
+        {
+          "id": "r2_02",
+          "label": "Stay put and read the message",
+          "reason": "Adultery & Infidelity",
+          "weight": 2,
+          "tension": 1,
+          "next": "r2_s2b"
+        },
+        {
+          "id": "r2_03",
+          "label": "Step outside for some air",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r2_s2c"
+        }
+      ]
+    },
+    "r2_s2a": {
+      "text": "Up close it's harmless. He's a cousin visiting from overseas, and he introduces you. You feel a little foolish.",
+      "choices": [
+        {
+          "id": "r2_04",
+          "label": "Laugh it off together",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r2_end_trust"
+        },
+        {
+          "id": "r2_05",
+          "label": "Keep wondering anyway",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r2_end_doubt"
+        }
+      ]
+    },
+    "r2_s2b": {
+      "text": "The message reads: \"Still thinking about you.\" You look up. He is watching you read it.",
+      "choices": [
+        {
+          "id": "r2_06",
+          "label": "Reply",
+          "reason": "Adultery & Infidelity",
+          "weight": 2,
+          "tension": 2,
+          "next": "r2_end_secret"
+        },
+        {
+          "id": "r2_07",
+          "label": "Delete it and say nothing",
+          "reason": "Adultery & Infidelity",
+          "weight": 1,
+          "tension": 1,
+          "next": "r2_end_silence"
+        }
+      ]
+    },
+    "r2_s2c": {
+      "text": "In the corridor you realise you are checking whether he follows you. He doesn't.",
+      "choices": [
+        {
+          "id": "r2_08",
+          "label": "Go back and ask him directly",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r2_end_trust"
+        },
+        {
+          "id": "r2_09",
+          "label": "Stay out here and say nothing",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r2_end_silence"
+        }
+      ]
+    },
+    "r2_end_trust": {
+      "text": "You ask, he answers, and the knot loosens. Asking out loud was the hard part.",
+      "choices": [],
+      "ending": {
+        "title": "Clearing the air",
+        "tone": "hopeful"
+      }
+    },
+    "r2_end_doubt": {
+      "text": "Nothing happened. But the question stays with you all night, and it has no one to answer it.",
+      "choices": [],
+      "ending": {
+        "title": "A seed of doubt",
+        "tone": "uneasy"
+      }
+    },
+    "r2_end_secret": {
+      "text": "You hit send. It's only a few words. It's also the first thing you've kept from him.",
+      "choices": [],
+      "ending": {
+        "title": "A secret begins",
+        "tone": "dark"
+      }
+    },
+    "r2_end_silence": {
+      "text": "On the ride home you both look out of different windows. Neither of you says what you are thinking.",
+      "choices": [],
+      "ending": {
+        "title": "Unsaid",
+        "tone": "uneasy"
+      }
+    }
+  }
+}

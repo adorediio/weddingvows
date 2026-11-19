@@ -1,0 +1,123 @@
+{
+  "room": 3,
+  "title": "Phone Discovery",
+  "start": "r3_s1",
+  "scenes": {
+    "r3_s1": {
+      "text": "You come home to find him at the table with your phone in his hand. \"Who is this?\" On the screen are messages you never meant him to read.",
+      "choices": [
+        {
+          "id": "r3_01",
+          "label": "Tell him the truth",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_s2a"
+        },
+        {
+          "id": "r3_02",
+          "label": "\"They're just friends.\"",
+          "reason": "Adultery & Infidelity",
+          "weight": 2,
+          "tension": 1,
+          "next": "r3_s2b"
+        },
+        {
+          "id": "r3_03",
+          "label": "Snatch the phone back",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 2,
+          "next": "r3_s2c"
+        }
+      ]
+    },
+    "r3_s2a": {
+      "text": "He is quiet. His jaw tightens, but he stays seated.",
+      "choices": [
+        {
+          "id": "r3_04",
+          "label": "Explain without defending yourself",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_end_talk"
+        },
+        {
+          "id": "r3_05",
+          "label": "Ask what he might be hiding too",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r3_end_standoff"
+        }
+      ]
+    },
+    "r3_s2b": {
+      "text": "He scrolls. \"Friends don't write this.\" His voice is rising.",
+      "choices": [
+        {
+          "id": "r3_06",
+          "label": "Admit it",
+          "reason": "Adultery & Infidelity",
+          "weight": 1,
+          "tension": 0,
+          "next": "r3_end_talk"
+        },
+        {
+          "id": "r3_07",
+          "label": "Insist he is overreacting",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 2,
+          "next": "r3_end_boil"
+        }
+      ]
+    },
+    "r3_s2c": {
+      "text": "The phone hits the floor and the screen cracks. Neither of you moves.",
+      "choices": [
+        {
+          "id": "r3_08",
+          "label": "Apologise",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r3_end_talk"
+        },
+        {
+          "id": "r3_09",
+          "label": "\"Look what you made me do.\"",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 2,
+          "next": "r3_end_boil"
+        }
+      ]
+    },
+    "r3_end_talk": {
+      "text": "It goes on until three in the morning, with no shouting. Nothing is fixed, but both of you now know where things stand.",
+      "choices": [],
+      "ending": {
+        "title": "A hard, honest night",
+        "tone": "hopeful"
+      }
+    },
+    "r3_end_standoff": {
+      "text": "You each retreat to your own side of the room. The phone sits face down between you.",
+      "choices": [],
+      "ending": {
+        "title": "Standoff",
+        "tone": "uneasy"
+      }
+    },
+    "r3_end_boil": {
+      "text": "He stands up too fast and the chair scrapes back. \"We're not done,\" he says, and the room goes very still.",
+      "choices": [],
+      "ending": {
+        "title": "Boiling point",
+        "tone": "dark"
+      }
+    }
+  }
+}

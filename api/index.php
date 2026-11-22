@@ -4,6 +4,8 @@ require_once __DIR__ . '/choices.php';
 require_once __DIR__ . '/outcome.php';
 require_once __DIR__ . '/profile.php';
 
+session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+session_start();
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -34,6 +36,48 @@ function need(array $data, array $fields): void {
             send(400, ['error' => "Missing field: $f"]);
         }
     }
+}
+
+function currentPlayerID(): ?string {
+    return $_SESSION['playerID'] ?? null;
+}
+
+function requireLogin(): string {
+    $id = currentPlayerID();
+    if ($id === null) {
+        send(401, ['error' => 'Not logged in']);
+    }
+    return $id;
+}
+
+function ownSessionOrFail(string $sessionID): array {
+    $playerID = requireLogin();
+    $session = getSession($sessionID);
+    if (!$session) {
+        send(404, ['error' => 'Session not found']);
+    }
+    if (($session['playerID'] ?? null) !== $playerID) {
+        send(403, ['error' => 'This game belongs to another player']);
+    }
+    return $session;
+}
+
+function fullOutcome(array $session): array {
+    $outcome = buildOutcome($session['choices'] ?? []);
+    $player = getPlayer($session['playerID']);
+    $outcome['age_comparison'] = buildAgeComparison($player['profile']['age_group'] ?? null);
+    return $outcome;
+}
+
+function accountPayload(array $player): array {
+    $playerID = $player['playerID'];
+    return [
+        'username'   => $player['username'],
+        'age_group'  => $player['profile']['age_group'] ?? null,
+        'new_player' => !playerHasSessions($playerID),
+        'resume'     => getResumeInfo($playerID),
+        'finished'   => getFinishedInfo($playerID),
+    ];
 }
 
 // Browsers send an options request first
@@ -117,7 +161,7 @@ try {
 
         if ($sessionID) {
             $session = getSession($sessionID);
-            if ($session) {
+            if ($session && ($session['playerID'] ?? null) === currentPlayerID()) {
                 $scores = tallyChoices($session['choices'] ?? []);
                 $payload['session_so_far'] = [
                     'choices_made' => count($session['choices'] ?? []),
@@ -140,6 +184,98 @@ try {
         ]);
     }
 
+    // POST /auth/signup
+    if ($method === 'POST' && $parts === ['auth', 'signup']) {
+        mongo();
+        $d = body();
+        need($d, ['username', 'password']);
+        $username = strtolower(trim((string) $d['username']));
+        $password = (string) $d['password'];
+        if (!preg_match('/^[a-z0-9_]{3,20}$/', $username)) {
+            send(400, ['error' => 'Username must be 3 to 20 letters, numbers or underscores']);
+        }
+        if (strlen($password) < 6 || strlen($password) > 72) {
+            send(400, ['error' => 'Password must be 6 to 72 characters']);
+        }
+        try {
+            $playerID = createAccount($username, password_hash($password, PASSWORD_DEFAULT));
+        } catch (Exception $e) {
+            send(409, ['error' => $e->getMessage()]);
+        }
+        session_regenerate_id(true);
+        $_SESSION['playerID'] = $playerID;
+        send(201, accountPayload(getPlayer($playerID)));
+    }
+
+    // POST /auth/login
+    if ($method === 'POST' && $parts === ['auth', 'login']) {
+        mongo();
+        $d = body();
+        need($d, ['username', 'password']);
+        $player = getPlayerByUsername(strtolower(trim((string) $d['username'])));
+        if (!$player || !isset($player['password_hash']) ||
+            !password_verify((string) $d['password'], $player['password_hash'])) {
+            usleep(400000);
+            send(401, ['error' => 'Wrong username or password']);
+        }
+        session_regenerate_id(true);
+        $_SESSION['playerID'] = $player['playerID'];
+        send(200, accountPayload($player));
+    }
+
+    // GET /auth/me
+    if ($method === 'GET' && $parts === ['auth', 'me']) {
+        $playerID = requireLogin();
+        mongo();
+        $player = getPlayer($playerID);
+        if (!$player) {
+            session_destroy();
+            send(401, ['error' => 'Not logged in']);
+        }
+        send(200, accountPayload($player));
+    }
+
+    // POST /auth/logout
+    if ($method === 'POST' && $parts === ['auth', 'logout']) {
+        $_SESSION = [];
+        session_destroy();
+        send(200, ['logged_out' => true]);
+    }
+
+    // POST /auth/profile   body: {"age_group": "30-34"}
+    if ($method === 'POST' && $parts === ['auth', 'profile']) {
+        $playerID = requireLogin();
+        mongo();
+        $d = body();
+        need($d, ['age_group']);
+        if (!in_array($d['age_group'], knownAgeGroups(), true)) {
+            send(400, ['error' => 'Unknown age_group']);
+        }
+        setPlayerAgeGroup($playerID, $d['age_group']);
+        send(200, ['saved' => true]);
+    }
+
+    // POST /game/new
+    if ($method === 'POST' && $parts === ['game', 'new']) {
+        $playerID = requireLogin();
+        mongo();
+        send(201, ['sessionID' => startSession($playerID)]);
+    }
+
+    // POST /sessions/{sessionID}/room-done   body: {"room": 2}
+    if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'room-done') {
+        mongo();
+        ownSessionOrFail($parts[1]);
+        $d = body();
+        need($d, ['room']);
+        $room = (int) $d['room'];
+        if ($room < 1 || $room > 4) {
+            send(400, ['error' => 'Unknown room']);
+        }
+        markRoomDone($parts[1], $room);
+        send(200, ['saved' => true]);
+    }
+
     // POST /choices   body: {"sessionID": "...", "choiceID": "r2_02", "sceneID": "r2_s1"}
     // Saves the choice and returns the next scene. room_done is true when the next
     // scene is an ending. The session stays open until /sessions/{id}/complete.
@@ -147,6 +283,7 @@ try {
         mongo();
         $data = body();
         need($data, ['sessionID', 'choiceID', 'sceneID']);
+        ownSessionOrFail($data['sessionID']);
 
         $rule = getChoiceRule($data['choiceID']);
         if ($rule === null) {
@@ -164,25 +301,41 @@ try {
         ]);
     }
 
+    // GET /sessions/{sessionID}/outcome
+    if ($method === 'GET' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'outcome') {
+        mongo();
+        $session = ownSessionOrFail($parts[1]);
+        if (($session['completed_at'] ?? null) === null) {
+            send(409, ['error' => 'This game is not finished yet']);
+    }
+    $outcome = $session['outcome'] ?? null;
+    if ($outcome === null) {   // games finished before snapshots existed
+    $outcome = fullOutcome($session);
+    saveOutcomeSnapshot($parts[1], $outcome);
+    }
+    send(200, ['outcome' => $outcome]);
+    }    
+
     // POST /sessions/{sessionID}/complete
     // Called once, when every room has been finished (showEnding). Closes the
     // session and returns the outcome that links the choices to the SQL statistics.
     if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'complete') {
         mongo();
-        $session = getSession($parts[1]);
-        if (!$session) {
-            send(404, ['error' => 'Session not found']);
-        }
+        $session = ownSessionOrFail($parts[1]);
         completeSession($parts[1]);   // does nothing if it was already completed
-        send(200, ['finished' => true, 'outcome' => buildOutcome($session['choices'])]);
+    $outcome = $session['outcome'] ?? null;
+    if ($outcome === null) {
+        $outcome = fullOutcome($session);
+        saveOutcomeSnapshot($parts[1], $outcome);
+    }
+    send(200, ['finished' => true, 'outcome' => $outcome]);
     }
 
     // POST /sessions   body: {"playerID": "..."}
     if ($method === 'POST' && $parts === ['sessions']) {
+        $playerID = requireLogin();
         mongo();
-        $data = body();
-        need($data, ['playerID']);
-        send(201, ['sessionID' => startSession($data['playerID'])]);
+        send(201, ['sessionID' => startSession($playerID)]);
     }
 
     // POST /players   body: {"username": "...", "email": "..."}
@@ -198,13 +351,15 @@ try {
     }
 
     // GET /players/{username}
-    if ($method === 'GET' && count($parts) === 2 && $parts[0] === 'players') {
-        mongo();
-        $p = getPlayerByUsername($parts[1]);
-        if ($p) {
-            send(200, formatDates($p));
-        }
-        send(404, ['error' => 'Player not found']);
+    $playerID = requireLogin();
+    mongo();
+    $p = getPlayerByUsername($parts[1]);
+    if ($p && $p['playerID'] !== $playerID) {
+        send(403, ['error' => 'Not your account']);
+    }
+    if ($p) {
+        unset($p['password_hash']);
+        send(200, formatDates($p));
     }
 
     // No route match

@@ -136,6 +136,44 @@ function durationStats(int $year): array {
     return $rows;
 }
 
+// To set up views
+function ensureViews(): void {
+static $done = false;
+if ($done) {
+    return;
+}
+$pdo = getPdo();
+
+$pdo->exec("
+    CREATE OR REPLACE VIEW vw_divorce_reason_yearly AS
+    SELECT
+        y.year_value        AS `year`,
+        r.reason_name       AS `reason`,
+        d.marriage_duration AS `marriage_duration`,
+        f.divorce_count     AS `count`
+    FROM Fact_Divorce_Reason f
+    JOIN Dim_Year y              ON y.year_id = f.year_id
+    JOIN Dim_Reason r            ON r.reason_id = f.reason_id
+    JOIN Dim_Marriage_Duration d ON d.duration_id = f.duration_id
+");
+
+$pdo->exec("
+    CREATE OR REPLACE VIEW vw_divorce_age_yearly AS
+    SELECT
+        y.year_value    AS `year`,
+        g.gender_name   AS `gender`,
+        a.age_group     AS `age_group`,
+        f.divorce_count AS `count`
+    FROM Fact_Divorce_Age f
+    JOIN Dim_Year y      ON y.year_id = f.year_id
+    JOIN Dim_Gender g    ON g.gender_id = f.gender_id
+    JOIN Dim_Age_Group a ON a.age_group_id = f.age_group_id
+");
+
+$done = true;
+
+}
+
 // Mid-game HUD: Deep dive on a single divorce reason as the player encounters it
 function midgameReasonSpotlight(string $reason, ?int $year = null): array {
     ensureViews();

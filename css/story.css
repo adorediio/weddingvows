@@ -103,6 +103,7 @@
 .bar.mine .barFill { background: #e0505a; }
 .bar.mine .barLabel { font-weight: bold; }
 .barValue { text-align: right; font-size: 0.95rem; }
+
 /* Escalation ladder (warning signs) */
 .ladderList { list-style: none; margin: 1rem 0 0; padding: 0 0 0 1.1rem; border-left: 2px solid rgba(251,240,236,0.25); }
 .rung { position: relative; margin: 0 0 1rem; padding: 0.8rem 1rem; border-radius: 10px;
@@ -150,3 +151,67 @@
 @media (prefers-reduced-motion: reduce) {
     .story *, .story, .warn * { animation: none !important; transition: none !important; }
 }
+
+/* ---------- age group comparison chart ---------- */
+.cmpLegend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; margin: 0.8rem 0 0.4rem; font-size: 1rem; }
+.cmpKey { display: inline-block; width: 0.85rem; height: 0.85rem; margin-right: 0.45rem; border-radius: 3px; vertical-align: -1px; }
+.cmpMine { background: #e8c27a; }
+.cmpAll { background: #c9877b; }
+.cmpChart { display: flex; align-items: flex-end; gap: 0.8rem; height: 14rem; margin: 1rem 0 0.5rem; padding: 0 0.2rem;
+    border-bottom: 1px solid rgba(251,240,236,0.35); }
+.cmpGroup { flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 0.3rem; }
+.cmpCol { flex: 1 1 0; min-width: 0; max-width: 2.8rem; height: 100%; display: flex; flex-direction: column;
+    justify-content: flex-end; align-items: center; }
+.cmpVal { margin-bottom: 0.2rem; font-size: 0.9rem; font-weight: 600; white-space: nowrap; }
+.cmpFill { width: 100%; height: 0; border-radius: 6px 6px 0 0; transition: height 1s ease; }
+.cmpLabels { display: flex; gap: 0.8rem; padding: 0 0.2rem 0.5rem; }
+.cmpLabel { flex: 1; min-width: 0; text-align: center; font-size: 0.9rem; line-height: 1.3; overflow-wrap: break-word; }
+@media (max-width: 600px) {
+    .cmpChart, .cmpLabels { gap: 0.25rem; }
+    .cmpGroup { gap: 0.15rem; }
+    .cmpVal { font-size: 0.72rem; }
+    .cmpLabel { font-size: 0.7rem; }
+}
+
+/* halfway checkpoint */
+.hudKicker { margin: 0 0 0.5rem; font-size: 0.95rem; letter-spacing: 0.04em; opacity: 0.8; }
+.halfwayGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; }
+.halfwayStat { padding: 1.1rem 1rem; border: 1px solid rgba(251,240,236,0.3); border-radius: 10px;
+    background: rgba(251,240,236,0.06); }
+.halfwayNum { font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: bold; line-height: 1; color: #f2b8c0;
+    text-shadow: 0 0 18px rgba(80, 157, 224, 0.45); }
+.halfwayBar { height: 8px; margin-top: 0.8rem; border-radius: 999px; background: rgba(251,240,236,0.15); overflow: hidden; }
+.halfwayFill { height: 100%; width: 0; border-radius: 999px; background: #e0505a; transition: width 1.2s ease; }
+.halfwayLbl { margin-top: 0.7rem; font-size: 0.95rem; line-height: 1.4; }
+.dashText strong { font-size: 1.15em; color: #f2b8c0; }
+
+@media (max-width: 600px) {
+    .halfwayGrid { grid-template-columns: 1fr; }
+}
+
+/* live SQL stats at the top of a room */
+.midgameHud { position: relative; z-index: 1; align-self: center; box-sizing: border-box;
+    width: min(40rem, calc(100% - 2.5rem)); margin: 1.2rem auto 0; padding: 0.8rem 1rem;
+    border-left: 3px solid #e0505a; border-radius: 10px; background: rgba(29,17,24,0.6);
+    opacity: 0; transition: opacity 0.6s ease; }
+.midgameHud.ready { opacity: 1; }
+.midgameHud .hudKicker { margin: 0 0 0.35rem; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+.midgameHud .hudHeadline { font-size: 1.05rem; font-weight: bold; line-height: 1.4; color: #f2b8c0; }
+.midgameHud .hudSub { margin-top: 0.3rem; font-size: 0.95rem; line-height: 1.4; opacity: 0.85; }
+
+/* Authentication Page */
+.authTabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.65rem; margin-bottom: 1rem; }
+.authTab { text-align: center; margin-top: 0; }
+.authTab[aria-pressed="true"] { background: rgba(224,80,90,0.28); border-color: #e0505a; }
+.authLabel { display: block; margin-top: 0.9rem; font-size: 1.05rem; }
+.authInput { display: block; width: 100%; box-sizing: border-box; margin-top: 0.35rem; padding: 0.8rem 1rem;
+    font: inherit; font-size: 1.05rem; color: #fbf0ec; background: rgba(251,240,236,0.08);
+    border: 1px solid rgba(251,240,236,0.45); border-radius: 10px; }
+.authInput:focus-visible { outline: 2px solid #f2b8c0; outline-offset: 3px; }
+.authHint { margin: 0.9rem 0 0; font-size: 0.95rem; opacity: 0.8; }
+.authError { min-height: 1.4em; margin: 0.7rem 0 0; color: #ffb3b8; font-size: 1rem; }
+.authSubmit { text-align: center; }
+.userBar { position: fixed; top: 0.7rem; right: 0.9rem; z-index: 150; display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.35rem 0.8rem; border-radius: 999px; background: rgba(29,17,24,0.75); color: #fbf0ec;
+    font-family: Georgia, 'Times New Roman', serif; font-size: 0.95rem; }
+.userLogout { font: inherit; color: #f2b8c0; background: none; border: none; cursor: pointer; text-decoration: underline; }

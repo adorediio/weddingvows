@@ -29,7 +29,8 @@
         sceneID: null,
         tensionPoints: 0,
         busy: false,
-        profile: null          // { age_group } from the personal start, or null if skipped
+        profile: null,          // { age_group } from the personal start, or null if skipped
+        user: null
     };
     const roomCache = {};
 
@@ -86,15 +87,8 @@
     // Guest player + session, created the first time a choice is saved
     async function ensureSession() {
         if (game.sessionID) return game.sessionID;
-        const tag = Math.random().toString(36).slice(2, 8);
-        const newPlayer = {
-            username: 'guest_' + tag,
-            email: 'guest_' + tag + '@wedding.local'
-        };
-        if (game.profile) newPlayer.age_group = game.profile.age_group;
-        const player = await api('POST', '/players', newPlayer);
-        const session = await api('POST', '/sessions', { playerID: player.playerID });
-        game.sessionID = session.sessionID;
+        const res = await api('POST', '/game/new');
+        game.sessionID = res.sessionID;
         return game.sessionID;
     }
 
@@ -307,6 +301,232 @@
         setCardsVisible(true);
     }
 
+        // ---------- account: signup, login, new start, continue ----------
+
+    function inputField(label, type, name, autocomplete) {
+        const row = el('label', 'authLabel', label);
+        const input = el('input', 'authInput');
+        input.type = type;
+        input.name = name;
+        input.autocomplete = autocomplete;
+        input.required = true;
+        input.maxLength = type === 'password' ? 72 : 20;
+        row.appendChild(input);
+        return { row: row, input: input };
+    }
+
+    function overlayCard(titleText) {
+        const wrap = el('div', 'warn');
+        wrap.setAttribute('role', 'dialog');
+        wrap.setAttribute('aria-modal', 'true');
+        wrap.setAttribute('aria-labelledby', 'warnTitle');
+        const card = el('div', 'warnCard');
+        const title = el('h1', 'warnTitle', titleText);
+        title.id = 'warnTitle';
+        card.appendChild(title);
+        wrap.appendChild(card);
+        document.body.appendChild(wrap);
+        return { wrap: wrap, card: card };
+    }
+
+    function showAuth() {
+        const ui = overlayCard('Your story');
+        const card = ui.card;
+        card.appendChild(el('p', null, 'Log in to continue your story, or sign up to begin a new one. Every choice you make is saved to your account.'));
+
+        let mode = 'login';
+        const tabs = el('div', 'authTabs');
+        const tabLogin = el('button', 'storyChoice authTab', 'Log in');
+        const tabSignup = el('button', 'storyChoice authTab', 'Sign up');
+        [tabLogin, tabSignup].forEach(function (t) { t.type = 'button'; tabs.appendChild(t); });
+        card.appendChild(tabs);
+
+        const form = el('form', 'authForm');
+        const user = inputField('Username', 'text', 'username', 'username');
+        const pass = inputField('Password', 'password', 'password', 'current-password');
+        const hint = el('p', 'authHint', '');
+        const error = el('p', 'authError', '');
+        error.setAttribute('role', 'alert');
+        const submit = el('button', 'storyChoice authSubmit', 'Log in');
+        submit.type = 'submit';
+        form.append(user.row, pass.row, hint, error, submit);
+        card.appendChild(form);
+
+        function setMode(m) {
+            mode = m;
+            tabLogin.setAttribute('aria-pressed', String(m === 'login'));
+            tabSignup.setAttribute('aria-pressed', String(m === 'signup'));
+            submit.textContent = m === 'login' ? 'Log in' : 'Create account';
+            pass.input.autocomplete = m === 'login' ? 'current-password' : 'new-password';
+            hint.textContent = m === 'signup' ? 'Username: 3 to 20 letters, numbers or underscores. Password: at least 6 characters.' : '';
+            error.textContent = '';
+        }
+        tabLogin.addEventListener('click', function () { setMode('login'); });
+        tabSignup.addEventListener('click', function () { setMode('signup'); });
+        setMode('login');
+
+        form.addEventListener('submit', async function (ev) {
+            ev.preventDefault();
+            error.textContent = '';
+            submit.disabled = true;
+            try {
+                const res = await api('POST', mode === 'login' ? '/auth/login' : '/auth/signup', {
+                    username: user.input.value,
+                    password: pass.input.value
+                });
+                ui.wrap.remove();
+                onAuthed(res);
+            } catch (e) {
+                error.textContent = e.message === 'Failed to fetch'
+                    ? 'The game server is not reachable. Check that it is running.'
+                    : e.message;
+                submit.disabled = false;
+            }
+        });
+        user.input.focus({ preventScroll: true });
+    }
+
+    function onAuthed(res, replay) {
+        game.user = { username: res.username, age_group: res.age_group };
+        game.profile = res.age_group ? { age_group: res.age_group } : null;
+        game.sessionID = null;
+        addUserBar();
+        if (replay) {
+            if (!res.age_group) showPersonalStart();
+        } else if (res.resume) {
+            showWelcomeBack(res.resume);
+        } else if (res.finished) {
+            showFinished(res.finished);
+        } else if (!res.age_group) {
+            showPersonalStart();
+        }
+    }
+
+    function showWelcomeBack(resume) {
+        const ui = overlayCard('Welcome back, ' + game.user.username);
+        ui.card.appendChild(el('p', null,
+            'Your story is saved. You made ' + resume.choices_made + ' choice' + (resume.choices_made === 1 ? '' : 's') +
+            ' and finished ' + resume.rooms_done.length + ' of ' + rooms.length + ' rooms.'));
+        const actions = el('div', 'warnActions');
+        const cont = el('button', 'storyChoice', 'Continue');
+        const fresh = el('button', 'storyChoice', 'Start over');
+        const error = el('p', 'authError', '');
+        [cont, fresh].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
+        actions.appendChild(error);
+        ui.card.appendChild(actions);
+
+        cont.addEventListener('click', function () {
+            ui.wrap.remove();
+            game.sessionID = resume.sessionID;
+            restoreProgress(resume);
+        });
+        fresh.addEventListener('click', async function () {
+            fresh.disabled = cont.disabled = true;
+            try {
+                game.sessionID = (await api('POST', '/game/new')).sessionID;
+                ui.wrap.remove();
+            } catch (e) {
+                error.textContent = e.message;
+                fresh.disabled = cont.disabled = false;
+            }
+        });
+        cont.focus({ preventScroll: true });
+    }
+
+    function showFinished(f) {
+        const ui = overlayCard('Welcome back, ' + game.user.username);
+        ui.card.appendChild(el('p', null,
+            'You finished your last story (' + f.choices_made + ' choice' + (f.choices_made === 1 ? '' : 's') +
+            '). Your answers are saved. Do you want to see your last report or start a new game?'));
+        const actions = el('div', 'warnActions');
+        const view = el('button', 'storyChoice', 'View my last report');
+        const fresh = el('button', 'storyChoice', 'Start a new game');
+        const error = el('p', 'authError', '');
+        [view, fresh].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
+        actions.appendChild(error);
+        ui.card.appendChild(actions);
+
+        view.addEventListener('click', async function () {
+            view.disabled = fresh.disabled = true;
+            try {
+                const res = await api('GET', '/sessions/' + f.sessionID + '/outcome');
+                ui.wrap.remove();
+                skipIntro();
+                openStory();
+                story.root.classList.add('dashMode');
+                renderDashboard(res.outcome);
+                if (typeof stopTension === 'function') stopTension();
+            } catch (e) {
+                error.textContent = e.message;
+                view.disabled = fresh.disabled = false;
+            }
+        });
+        fresh.addEventListener('click', function () {
+            ui.wrap.remove();
+            game.sessionID = null;
+            if (!game.profile) showPersonalStart();
+        });
+        view.focus({ preventScroll: true });
+    }
+
+    function skipIntro() {
+        try {
+            canvas.getObjects().forEach(function (o) {
+                if (o !== chapelBackground) {
+                    o.set({ visible: false, evented: false });
+                }
+            });
+            if (chapelBackground) {
+                chapelBackground.scaleX *= 1.1 * 1.35;
+                chapelBackground.scaleY *= 1.1 * 1.35;
+                chapelBackground.filters = [new fabric.Image.filters.Blur({ blur: 0.25 })];
+                chapelBackground.applyFilters();
+            }
+            canvas.renderAll();
+        } catch (e) {
+            console.warn('Intro not skipped cleanly:', e.message);
+        }
+        if (typeof startBreathingHeartbeat === 'function') startBreathingHeartbeat();
+    }
+
+    function restoreProgress(r) {
+        const done = r.rooms_done || [];
+        done.forEach(function (id) { visitedRooms.add(id); unlockRoom(id + 1); });
+        skipIntro();
+        showRoomChoices();
+        if (done.length >= rooms.length) { showEnding(); return; }
+
+        const m = /^r(\d+)_/.exec(r.current_scene || '');
+        const room = m ? Number(m[1]) : null;
+        if (room && r.choices_made > 0 && !visitedRooms.has(room)) {
+            unlockRoom(room);
+            enterRoom(room, r.current_scene, r.choice_ids);
+        }
+    }
+
+    function addUserBar() {
+        if (document.getElementById('userBar')) return;
+        const bar = el('div', 'userBar');
+        bar.id = 'userBar';
+        bar.appendChild(el('span', 'userName', game.user.username));
+        const out = el('button', 'userLogout', 'Log out');
+        out.type = 'button';
+        out.addEventListener('click', async function () {
+            try { await api('POST', '/auth/logout'); } catch (e) { }
+            location.reload();
+        });
+        bar.appendChild(out);
+        document.body.appendChild(bar);
+    }
+
+    async function startAccountFlow() {
+        try {
+            onAuthed(await api('GET', '/auth/me'), replay);
+        } catch (e) {
+            showAuth();
+        }
+    }
+
     // ---------- content warning (shown before the doors) ----------
 
     function showContentWarning() {
@@ -334,7 +554,7 @@
             b.addEventListener('click', function () {
                 setSound(opt[1]);
                 wrap.remove();
-                showPersonalStart();
+                startAccountFlow();
             });
             actions.appendChild(b);
         });
@@ -423,7 +643,7 @@
         card.appendChild(title);
         card.appendChild(el('p', null,
             'Which age group are you in? You will see how it compares with divorces in Singapore. ' +
-            'This is optional. If you pick one, only the age group is saved with your anonymous guest session.'));
+            'This is optional. If you pick one, only the age group is saved with your account.'));
 
         const grid = el('div', 'ageGrid');
         groups.forEach(function (g) {
@@ -432,6 +652,9 @@
             b.addEventListener('click', async function () {
                 grid.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
                 game.profile = { age_group: g };
+                api('POST', '/auth/profile', { age_group: g }).catch(function (e) {
+                    console.warn('Age group not saved:', e.message);
+                });
                 try {
                     renderComparison(card, await api('GET', '/stats/profile?age_group=' + encodeURIComponent(g)));
                 } catch (e) {
@@ -455,7 +678,7 @@
 
     // ---------- entering a room and playing scenes ----------
 
-    async function enterRoom(id) {
+    async function enterRoom(id, startScene, choiceIDs) {
         if (game.busy || visitedRooms.has(id)) return;
         game.busy = true;
         setCardsVisible(false);
@@ -463,17 +686,25 @@
         try {
             game.room = await loadRoom(id);
             game.roomId = id;
-            setTension(0);
+            let points = 0;
+            if (choiceIDs) {
+                Object.keys(game.room.scenes).forEach(function (k) {
+                    (game.room.scenes[k].choices || []).forEach(function (c) {
+                        if (choiceIDs.indexOf(c.id) !== -1) points += c.tension || 0;
+                    });
+                });
+            }
+            setTension(points);
             game.busy = false;
             updateMidgameHud(ROOM_DEFAULT_REASON[id]);
-            renderScene(game.room.start);
+            renderScene(startScene || game.room.start);
         } catch (e) {
             game.busy = false;
             console.error('Could not open room ' + id + ':', e);
             showMessage(
                 'This room could not be loaded (' + e.message + '). Check that the rooms folder sits next to index.html, then try again.',
                 [
-                    { label: 'Try again', run: function () { enterRoom(id); } },
+                    { label: 'Try again', run: function () { enterRoom(id, startScene, choiceIDs); } },
                     { label: 'Back to the rooms', run: backToRooms }
                 ]
             );
@@ -732,6 +963,11 @@
 
     function finishRoom() {
         const id = game.roomId;
+        if (game.sessionID) {
+            api('POST', '/sessions/' + game.sessionID + '/room-done', { room: id }).catch(function (e) {
+                console.warn('Room progress not saved:', e.message);
+            });
+        }        
         closeStory();
         restoreCardAudio();
         unlockRoom(id + 1);
@@ -741,6 +977,11 @@
             return;
         }
         if (visitedRooms.size < rooms.length) setCardsVisible(true);
+    }
+
+    function playAgain() {
+        try { sessionStorage.setItem('wvReplay', soundOn ? 'on' : 'off'); } catch (e) { }
+        location.reload();
     }
 
     // ---------- final dashboard ----------
@@ -762,7 +1003,7 @@
                 'The national figures could not be loaded. Check that the API is running, then try again.',
                 [
                     { label: 'Try again', run: showEnding },
-                    { label: 'Play again', run: function () { location.reload(); } }
+                    { label: 'Play again', run: playAgain }
                 ]
             );
         }
@@ -826,6 +1067,50 @@
         return section;
     }
 
+    // Comparison age chart
+        function buildAgeChart(ac) {
+        const box = el('div', 'cmp');
+        const legend = el('div', 'cmpLegend');
+        [['cmpMine', ac.age_group], ['cmpAll', 'All players']].forEach(function (k) {
+            const item = el('span', null);
+            item.appendChild(el('span', 'cmpKey ' + k[0]));
+            item.appendChild(document.createTextNode(k[1]));
+            legend.appendChild(item);
+        });
+        box.appendChild(legend);
+
+        const max = Math.max.apply(null, ac.themes.map(function (t) {
+            return Math.max(Number(t.group_percent), Number(t.all_percent));
+        }).concat([1]));
+        const chart = el('div', 'cmpChart');
+        chart.setAttribute('role', 'img');
+        chart.setAttribute('aria-label', ac.themes.map(function (t) {
+            return t.reason + ': ' + ac.age_group + ' ' + t.group_percent + ' percent, all players ' + t.all_percent + ' percent';
+        }).join('. '));
+        const labels = el('div', 'cmpLabels');
+        const fills = [];
+
+        ac.themes.forEach(function (t) {
+            const group = el('div', 'cmpGroup');
+            [[t.group_percent, 'cmpMine'], [t.all_percent, 'cmpAll']].forEach(function (v) {
+                const col = el('div', 'cmpCol');
+                col.appendChild(el('div', 'cmpVal', Math.round(v[0]) + '%'));
+                const fill = el('div', 'cmpFill ' + v[1]);
+                col.appendChild(fill);
+                group.appendChild(col);
+                fills.push({ fill: fill, h: Number(v[0]) / max * 85 });
+            });
+            chart.appendChild(group);
+            labels.appendChild(el('div', 'cmpLabel', t.reason));
+        });
+        box.append(chart, labels);
+
+        setTimeout(function () {
+            fills.forEach(function (f) { f.fill.style.height = f.h + '%'; });
+        }, 150);
+        return box;
+    }
+
     function renderDashboard(o) {
         story.body.replaceChildren();
         const wrap = el('div', 'dash');
@@ -881,11 +1166,26 @@
             wrap.appendChild(row);
         });
 
-        wrap.appendChild(el('p', 'dashSource', 'Source: Singapore Department of Statistics (SingStat).'));
+            wrap.appendChild(el('p', 'dashSource', 'Source: Singapore Department of Statistics (SingStat).'));   
+
+        const ac = o.age_comparison;
+        if (ac) {
+            wrap.appendChild(el('h3', 'dashHead', 'You and other players aged ' + ac.age_group));
+            if (!ac.enough) {
+                wrap.appendChild(el('p', 'dashText',
+                    'Only ' + ac.group_games + ' finished game' + (ac.group_games === 1 ? '' : 's') + ' from players aged ' +
+                    ac.age_group + ' so far. The comparison appears once ' + ac.min_sample + ' have finished.'));
+            } else {
+                wrap.appendChild(el('p', 'dashText',
+                    'The main theme of each finished game. Players aged ' + ac.age_group + ' (' + ac.group_games +
+                    ' games) against all players (' + ac.all_games + ' games).'));
+                wrap.appendChild(buildAgeChart(ac));
+            }
+        }
 
         const again = el('button', 'storyChoice endingBtn', 'Play again');
         again.type = 'button';
-        again.addEventListener('click', function () { location.reload(); });
+        again.addEventListener('click', playAgain);
         wrap.appendChild(again);
 
         story.body.appendChild(wrap);
@@ -896,5 +1196,16 @@
     window.enterRoom = enterRoom;
     window.showEnding = showEnding;
 
-    showContentWarning();
+    let replay = null;
+    try {
+        replay = sessionStorage.getItem('wvReplay');
+        sessionStorage.removeItem('wvReplay');
+    } catch (e) { }
+
+    if (replay) {
+        setSound(replay === 'on');
+        startAccountFlow(true);
+    } else {
+        showContentWarning();
+    }
 })();

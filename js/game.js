@@ -1,7 +1,8 @@
 // =====================================================
 //  GAME
 //  Content warning, room stories (rooms/room{n}.json), API calls,
-//  tension effects, support screen and the final statistics dashboard.
+//  tension effects, multi-slot save/load, support screen and the
+//  final statistics dashboard.
 //
 //  Load this AFTER rooms.js. The enterRoom() and showEnding() defined here
 //  replace the placeholders in rooms.js (you can delete those two).
@@ -12,7 +13,6 @@
     const API_BASE = 'api/index.php';   // change this if your API lives somewhere else
     const MAX_TENSION_POINTS = 5;       // total choice tension that fills the red vignette
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
 
     // Verified against MSF's NAVH page. Re-check before submitting.
     const SUPPORT = [
@@ -23,13 +23,14 @@
 
     const game = {
         sessionID: null,
+        saveName: null,
         offline: false,        // true once an API call has failed
         room: null,            // the loaded room JSON
         roomId: null,
         sceneID: null,
         tensionPoints: 0,
         busy: false,
-        profile: null,          // { age_group } from the personal start, or null if skipped
+        profile: null,         // { age_group } from the personal start, or null if skipped
         user: null
     };
     const roomCache = {};
@@ -58,7 +59,7 @@
     const activeSfx = [];     // sounds still playing, so the next scene can fade them out
     const sfxTimers = [];     // cues waiting on a delay
     let soundOn = true;
-    let story = null;          // { root, body } for the open story overlay
+    let story = null;         // { root, body } for the open story overlay
 
     // ---------- small helpers ----------
 
@@ -73,6 +74,21 @@
         return new Promise(function (resolve) { setTimeout(resolve, reduceMotion ? 0 : ms); });
     }
 
+    function showToast(message) {
+        let toast = document.getElementById('saveToast');
+        if (!toast) {
+            toast = el('div', 'saveToast');
+            toast.id = 'saveToast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(Number(toast.dataset.timer || 0));
+        toast.dataset.timer = String(setTimeout(function () {
+            toast.classList.remove('show');
+        }, 2600));
+    }
+
     async function api(method, path, body) {
         const res = await fetch(API_BASE + path, {
             method: method,
@@ -84,7 +100,7 @@
         return data;
     }
 
-    // Guest player + session, created the first time a choice is saved
+    // Guest player + session, created the first time a choice or save is triggered
     async function ensureSession() {
         if (game.sessionID) return game.sessionID;
         const res = await api('POST', '/game/new');
@@ -301,7 +317,7 @@
         setCardsVisible(true);
     }
 
-        // ---------- account: signup, login, new start, continue ----------
+    // ---------- account: signup, login, new start, save/load, continue ----------
 
     function inputField(label, type, name, autocomplete) {
         const row = el('label', 'authLabel', label);
@@ -386,68 +402,105 @@
         user.input.focus({ preventScroll: true });
     }
 
-    function onAuthed(res, replay) {
+    function onAuthed(res, replayMode) {
         game.user = { username: res.username, age_group: res.age_group };
         game.profile = res.age_group ? { age_group: res.age_group } : null;
         game.sessionID = null;
+        game.saveName = null;
         addUserBar();
-        if (replay) {
+
+        if (replayMode && replayMode !== 'on' && replayMode !== 'off') {
+            // Loaded a specific save file from mid-game
+            api('GET', '/sessions/' + encodeURIComponent(replayMode))
+                .then(function (data) {
+                    game.sessionID = data.save.sessionID;
+                    game.saveName = data.save.save_name;
+                    restoreProgress(data.save);
+                    showToast('Loaded "' + data.save.save_name + '"');
+                })
+                .catch(function (e) {
+                    showToast('Could not load save: ' + e.message);
+                });
+            return;
+        }
+
+        if (replayMode) {
             if (!res.age_group) showPersonalStart();
         } else if (res.resume) {
-            showWelcomeBack(res.resume);
+            showWelcomeBack(res.resume, res.saves || []);
         } else if (res.finished) {
-            showFinished(res.finished);
+            showFinished(res.finished, res.saves || []);
         } else if (!res.age_group) {
             showPersonalStart();
         }
     }
 
-    function showWelcomeBack(resume) {
+    function formatSaveMeta(s) {
+        const where = s.completed
+            ? 'Completed'
+            : (s.current_room ? 'Room ' + s.current_room : 'Room Hub');
+        const dt = s.updated_at ? new Date(s.updated_at).toLocaleString([], {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : '';
+        return where + ' · ' + s.choices_made + ' choice' + (s.choices_made === 1 ? '' : 's') +
+            ' · ' + s.rooms_done.length + '/' + rooms.length + ' rooms' + (dt ? ' · ' + dt : '');
+    }
+
+    function showWelcomeBack(resume, saves) {
         const ui = overlayCard('Welcome back, ' + game.user.username);
         ui.card.appendChild(el('p', null,
-            'Your story is saved. You made ' + resume.choices_made + ' choice' + (resume.choices_made === 1 ? '' : 's') +
-            ' and finished ' + resume.rooms_done.length + ' of ' + rooms.length + ' rooms.'));
+            'Last played "' + (resume.save_name || 'Autosave') + '" (' + formatSaveMeta(resume) + ').'));
         const actions = el('div', 'warnActions');
         const cont = el('button', 'storyChoice', 'Continue');
-        const fresh = el('button', 'storyChoice', 'Start over');
+        const loadBtn = el('button', 'storyChoice', 'Load Save File' + (saves.length ? ' (' + saves.length + ')' : ''));
+        const fresh = el('button', 'storyChoice', 'Start New Game');
         const error = el('p', 'authError', '');
-        [cont, fresh].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
+        [cont, loadBtn, fresh].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
         actions.appendChild(error);
         ui.card.appendChild(actions);
 
         cont.addEventListener('click', function () {
             ui.wrap.remove();
             game.sessionID = resume.sessionID;
+            game.saveName = resume.save_name;
             restoreProgress(resume);
         });
+        loadBtn.addEventListener('click', function () {
+            ui.wrap.remove();
+            openLoadModal(function () { showWelcomeBack(resume, saves); });
+        });
         fresh.addEventListener('click', async function () {
-            fresh.disabled = cont.disabled = true;
+            fresh.disabled = cont.disabled = loadBtn.disabled = true;
             try {
-                game.sessionID = (await api('POST', '/game/new')).sessionID;
+                const label = 'Save ' + (saves.length + 1);
+                const created = await api('POST', '/game/new', { save_name: label });
+                game.sessionID = created.sessionID;
+                game.saveName = label;
                 ui.wrap.remove();
             } catch (e) {
                 error.textContent = e.message;
-                fresh.disabled = cont.disabled = false;
+                fresh.disabled = cont.disabled = loadBtn.disabled = false;
             }
         });
         cont.focus({ preventScroll: true });
     }
 
-    function showFinished(f) {
+    function showFinished(f, saves) {
         const ui = overlayCard('Welcome back, ' + game.user.username);
         ui.card.appendChild(el('p', null,
             'You finished your last story (' + f.choices_made + ' choice' + (f.choices_made === 1 ? '' : 's') +
-            '). Your answers are saved. Do you want to see your last report or start a new game?'));
+            '). View your last report, load an earlier save file, or start a new game.'));
         const actions = el('div', 'warnActions');
         const view = el('button', 'storyChoice', 'View my last report');
+        const loadBtn = el('button', 'storyChoice', 'Load Save File' + (saves.length ? ' (' + saves.length + ')' : ''));
         const fresh = el('button', 'storyChoice', 'Start a new game');
         const error = el('p', 'authError', '');
-        [view, fresh].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
+        [view, loadBtn, fresh].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
         actions.appendChild(error);
         ui.card.appendChild(actions);
 
         view.addEventListener('click', async function () {
-            view.disabled = fresh.disabled = true;
+            view.disabled = fresh.disabled = loadBtn.disabled = true;
             try {
                 const res = await api('GET', '/sessions/' + f.sessionID + '/outcome');
                 ui.wrap.remove();
@@ -458,15 +511,237 @@
                 if (typeof stopTension === 'function') stopTension();
             } catch (e) {
                 error.textContent = e.message;
-                view.disabled = fresh.disabled = false;
+                view.disabled = fresh.disabled = loadBtn.disabled = false;
             }
+        });
+        loadBtn.addEventListener('click', function () {
+            ui.wrap.remove();
+            openLoadModal(function () { showFinished(f, saves); });
         });
         fresh.addEventListener('click', function () {
             ui.wrap.remove();
             game.sessionID = null;
+            game.saveName = null;
             if (!game.profile) showPersonalStart();
         });
         view.focus({ preventScroll: true });
+    }
+
+    async function openSaveModal() {
+        const ui = overlayCard('Save Progress');
+        const currentRoom = story ? game.roomId : null;
+        const currentScene = story ? game.sceneID : 'hub';
+        const locationLabel = currentRoom
+            ? 'Room ' + currentRoom + (game.sceneID ? ' (' + game.sceneID + ')' : '')
+            : 'Room Selection Hub';
+
+        ui.card.appendChild(el('p', null, 'Current location: ' + locationLabel));
+
+        const nameField = inputField('Save File Name', 'text', 'save_name', 'off');
+        nameField.input.maxLength = 40;
+        nameField.input.value = game.saveName || ('Save · ' + locationLabel);
+        ui.card.appendChild(nameField.row);
+
+        const error = el('p', 'authError', '');
+        const actions = el('div', 'warnActions');
+        const overwriteBtn = el('button', 'storyChoice', 'Save (Overwrite Current)');
+        const newSlotBtn = el('button', 'storyChoice', 'Save as New File');
+        const cancelBtn = el('button', 'storyChoice', 'Cancel');
+        [overwriteBtn, newSlotBtn, cancelBtn].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
+        ui.card.append(error, actions);
+
+        async function doSave(asNew) {
+            overwriteBtn.disabled = newSlotBtn.disabled = cancelBtn.disabled = true;
+            error.textContent = '';
+            try {
+                await ensureSession();
+                const res = await api('POST', '/sessions/' + game.sessionID + '/save', {
+                    save_name: nameField.input.value,
+                    current_room: currentRoom,
+                    current_scene: currentScene,
+                    tension_points: game.tensionPoints,
+                    as_new: asNew
+                });
+                game.sessionID = res.save.sessionID;
+                game.saveName = res.save.save_name;
+                ui.wrap.remove();
+                showToast('Saved "' + game.saveName + '"');
+            } catch (e) {
+                error.textContent = e.message;
+                overwriteBtn.disabled = newSlotBtn.disabled = cancelBtn.disabled = false;
+            }
+        }
+
+        overwriteBtn.addEventListener('click', function () { doSave(false); });
+        newSlotBtn.addEventListener('click', function () { doSave(true); });
+        cancelBtn.addEventListener('click', function () { ui.wrap.remove(); });
+        nameField.input.focus({ preventScroll: true });
+    }
+
+const MAX_SAVE_SLOTS = 5;
+
+    function buildSlotCard(slotNum, saveData, options) {
+        const isEmpty = !saveData;
+        const isCurrent = saveData && saveData.sessionID === game.sessionID;
+        const card = el('button', 'saveSlotCard' + (isEmpty ? ' empty' : '') + (isCurrent ? ' active' : ''));
+        card.type = 'button';
+
+        const header = el('div', 'saveSlotHeader');
+        const left = el('div', 'saveSlotTitleGroup');
+        left.appendChild(el('span', 'saveSlotBadge', 'Slot ' + slotNum));
+        left.appendChild(el('span', 'saveSlotName', isEmpty ? 'Empty Slot' : (saveData.save_name || 'Save ' + slotNum)));
+        if (isCurrent) {
+            left.appendChild(el('span', 'saveSlotCurrent', 'Current'));
+        }
+
+        const actionText = isEmpty
+            ? (options.allowEmpty ? 'Save here →' : 'Empty')
+            : options.actionLabel;
+        const action = el('span', 'saveSlotAction', actionText);
+        header.append(left, action);
+
+        const meta = el('div', 'saveSlotMeta',
+            isEmpty
+                ? (options.allowEmpty ? 'Click to save your current progress in this slot' : 'No saved data in this slot')
+                : formatSaveMeta(saveData)
+        );
+
+        card.append(header, meta);
+
+        if (isEmpty && !options.allowEmpty) {
+            card.disabled = true;
+        } else {
+            card.addEventListener('click', function () {
+                options.onSelect(slotNum, saveData);
+            });
+        }
+        return card;
+    }
+
+    async function openSaveModal() {
+        const ui = overlayCard('Save Progress');
+        const currentRoom = story ? game.roomId : null;
+        const currentScene = story ? game.sceneID : 'hub';
+        const locationLabel = currentRoom ? ('Room ' + currentRoom) : 'Room Selection Hub';
+
+        ui.card.appendChild(el('p', null, 'Checkpoint: ' + locationLabel + '. Choose a slot to save or overwrite (max 5 saves):'));
+
+        const list = el('div', 'saveList');
+        const status = el('p', 'saveSlotMeta', 'Loading slots...');
+        const error = el('p', 'authError', '');
+        const actions = el('div', 'warnActions');
+        const cancelBtn = el('button', 'storyChoice', 'Cancel');
+        cancelBtn.type = 'button';
+        cancelBtn.addEventListener('click', function () { ui.wrap.remove(); });
+        actions.appendChild(cancelBtn);
+        ui.card.append(status, list, error, actions);
+
+        async function saveToSlot(slotNum, existingSave) {
+            list.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+            cancelBtn.disabled = true;
+            error.textContent = '';
+
+            try {
+                await ensureSession();
+                const payload = {
+                    current_room: currentRoom,
+                    current_scene: currentScene,
+                    tension_points: game.tensionPoints,
+                    slot: slotNum,
+                    as_new: !existingSave,
+                    target_session_id: existingSave ? existingSave.sessionID : null
+                };
+                const res = await api('POST', '/sessions/' + game.sessionID + '/save', payload);
+                game.sessionID = res.save.sessionID;
+                game.saveName = res.save.save_name;
+                ui.wrap.remove();
+                showToast('Saved to Slot ' + slotNum + ' (' + game.saveName + ')');
+            } catch (e) {
+                error.textContent = e.message;
+                list.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+                cancelBtn.disabled = false;
+            }
+        }
+
+        try {
+            const res = await api('GET', '/sessions');
+            const saves = res.saves || [];
+            const bySlot = {};
+            saves.forEach(function (s, idx) {
+                const slot = s.slot || (idx + 1);
+                if (!bySlot[slot]) bySlot[slot] = s;
+            });
+
+            status.remove();
+            for (let i = 1; i <= MAX_SAVE_SLOTS; i++) {
+                list.appendChild(buildSlotCard(i, bySlot[i] || null, {
+                    allowEmpty: true,
+                    actionLabel: 'Overwrite →',
+                    onSelect: saveToSlot
+                }));
+            }
+        } catch (e) {
+            status.textContent = '';
+            error.textContent = e.message;
+        }
+    }
+
+    async function openLoadModal(onCancel) {
+        const ui = overlayCard('Load Save File');
+        const status = el('p', null, 'Select a save slot to resume from that point:');
+        const list = el('div', 'saveList');
+        const error = el('p', 'authError', '');
+        const actions = el('div', 'warnActions');
+        const closeBtn = el('button', 'storyChoice', 'Back');
+        closeBtn.type = 'button';
+        closeBtn.addEventListener('click', function () {
+            ui.wrap.remove();
+            if (typeof onCancel === 'function') onCancel();
+        });
+        actions.appendChild(closeBtn);
+        ui.card.append(status, list, error, actions);
+
+        function loadSlot(slotNum, s) {
+            if (!s) return;
+            if (document.getElementById('roomChoices')) {
+                try {
+                    sessionStorage.setItem('wvReplay', soundOn ? 'on' : 'off');
+                    sessionStorage.setItem('wvLoadSession', s.sessionID);
+                } catch (e) { }
+                location.reload();
+                return;
+            }
+            ui.wrap.remove();
+            game.sessionID = s.sessionID;
+            game.saveName = s.save_name;
+            restoreProgress(s);
+            showToast('Loaded Slot ' + slotNum + ' (' + s.save_name + ')');
+        }
+
+        try {
+            const res = await api('GET', '/sessions');
+            const saves = res.saves || [];
+            const bySlot = {};
+            saves.forEach(function (s, idx) {
+                const slot = s.slot || (idx + 1);
+                if (!bySlot[slot]) bySlot[slot] = s;
+            });
+
+            if (!saves.length) {
+                status.textContent = 'No save files found yet.';
+            }
+
+            for (let i = 1; i <= MAX_SAVE_SLOTS; i++) {
+                list.appendChild(buildSlotCard(i, bySlot[i] || null, {
+                    allowEmpty: false,
+                    actionLabel: 'Load →',
+                    onSelect: loadSlot
+                }));
+            }
+        } catch (e) {
+            status.textContent = '';
+            error.textContent = e.message;
+        }
     }
 
     function skipIntro() {
@@ -497,10 +772,10 @@
         if (done.length >= rooms.length) { showEnding(); return; }
 
         const m = /^r(\d+)_/.exec(r.current_scene || '');
-        const room = m ? Number(m[1]) : null;
-        if (room && r.choices_made > 0 && !visitedRooms.has(room)) {
+        const room = r.current_room || (m ? Number(m[1]) : null);
+        if (room && !visitedRooms.has(room)) {
             unlockRoom(room);
-            enterRoom(room, r.current_scene, r.choice_ids);
+            enterRoom(room, r.current_scene, r.choice_ids, r.tension_points);
         }
     }
 
@@ -509,19 +784,29 @@
         const bar = el('div', 'userBar');
         bar.id = 'userBar';
         bar.appendChild(el('span', 'userName', game.user.username));
+
+        const saveBtn = el('button', 'userLogout', 'Save');
+        saveBtn.type = 'button';
+        saveBtn.addEventListener('click', openSaveModal);
+
+        const loadBtn = el('button', 'userLogout', 'Load');
+        loadBtn.type = 'button';
+        loadBtn.addEventListener('click', function () { openLoadModal(); });
+
         const out = el('button', 'userLogout', 'Log out');
         out.type = 'button';
         out.addEventListener('click', async function () {
             try { await api('POST', '/auth/logout'); } catch (e) { }
             location.reload();
         });
-        bar.appendChild(out);
+
+        bar.append(saveBtn, loadBtn, out);
         document.body.appendChild(bar);
     }
 
-    async function startAccountFlow() {
+    async function startAccountFlow(modeOverride) {
         try {
-            onAuthed(await api('GET', '/auth/me'), replay);
+            onAuthed(await api('GET', '/auth/me'), modeOverride !== undefined ? modeOverride : replay);
         } catch (e) {
             showAuth();
         }
@@ -678,7 +963,7 @@
 
     // ---------- entering a room and playing scenes ----------
 
-    async function enterRoom(id, startScene, choiceIDs) {
+    async function enterRoom(id, startScene, choiceIDs, savedTension) {
         if (game.busy || visitedRooms.has(id)) return;
         game.busy = true;
         setCardsVisible(false);
@@ -694,7 +979,7 @@
                     });
                 });
             }
-            setTension(points);
+            setTension(typeof savedTension === 'number' ? savedTension : points);
             game.busy = false;
             updateMidgameHud(ROOM_DEFAULT_REASON[id]);
             renderScene(startScene || game.room.start);
@@ -704,7 +989,7 @@
             showMessage(
                 'This room could not be loaded (' + e.message + '). Check that the rooms folder sits next to index.html, then try again.',
                 [
-                    { label: 'Try again', run: function () { enterRoom(id, startScene, choiceIDs); } },
+                    { label: 'Try again', run: function () { enterRoom(id, startScene, choiceIDs, savedTension); } },
                     { label: 'Back to the rooms', run: backToRooms }
                 ]
             );
@@ -967,7 +1252,7 @@
             api('POST', '/sessions/' + game.sessionID + '/room-done', { room: id }).catch(function (e) {
                 console.warn('Room progress not saved:', e.message);
             });
-        }        
+        }
         closeStory();
         restoreCardAudio();
         unlockRoom(id + 1);
@@ -1068,7 +1353,7 @@
     }
 
     // Comparison age chart
-        function buildAgeChart(ac) {
+    function buildAgeChart(ac) {
         const box = el('div', 'cmp');
         const legend = el('div', 'cmpLegend');
         [['cmpMine', ac.age_group], ['cmpAll', 'All players']].forEach(function (k) {
@@ -1166,7 +1451,7 @@
             wrap.appendChild(row);
         });
 
-            wrap.appendChild(el('p', 'dashSource', 'Source: Singapore Department of Statistics (SingStat).'));   
+        wrap.appendChild(el('p', 'dashSource', 'Source: Singapore Department of Statistics (SingStat).'));
 
         const ac = o.age_comparison;
         if (ac) {
@@ -1197,12 +1482,18 @@
     window.showEnding = showEnding;
 
     let replay = null;
+    let loadSession = null;
     try {
         replay = sessionStorage.getItem('wvReplay');
+        loadSession = sessionStorage.getItem('wvLoadSession');
         sessionStorage.removeItem('wvReplay');
+        sessionStorage.removeItem('wvLoadSession');
     } catch (e) { }
 
-    if (replay) {
+    if (loadSession) {
+        setSound(replay !== 'off');
+        startAccountFlow(loadSession);
+    } else if (replay) {
         setSound(replay === 'on');
         startAccountFlow(true);
     } else {

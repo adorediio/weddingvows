@@ -71,19 +71,21 @@ function fullOutcome(array $session): array {
 
 function accountPayload(array $player): array {
     $playerID = $player['playerID'];
+    $saves = listPlayerSaves($playerID);
     return [
         'username'   => $player['username'],
         'age_group'  => $player['profile']['age_group'] ?? null,
-        'new_player' => !playerHasSessions($playerID),
+        'new_player' => count($saves) === 0,
         'resume'     => getResumeInfo($playerID),
         'finished'   => getFinishedInfo($playerID),
+        'saves'      => $saves,
     ];
 }
 
 // Browsers send an options request first
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'OPTIONS'){
-    send(204, null); //No content, request works
+    send(204, null); // No content, request works
 }
 
 // "/stats/reasons?year=2025" becomes ['stats', 'reasons']
@@ -259,7 +261,9 @@ try {
     if ($method === 'POST' && $parts === ['game', 'new']) {
         $playerID = requireLogin();
         mongo();
-        send(201, ['sessionID' => startSession($playerID)]);
+        $d = body();
+        $slot = isset($d['slot']) ? (int) $d['slot'] : null;
+        send(201, ['sessionID' => startSession($playerID, 'scene_01', $slot)]);
     }
 
     // POST /sessions/{sessionID}/room-done   body: {"room": 2}
@@ -277,8 +281,6 @@ try {
     }
 
     // POST /choices   body: {"sessionID": "...", "choiceID": "r2_02", "sceneID": "r2_s1"}
-    // Saves the choice and returns the next scene. room_done is true when the next
-    // scene is an ending. The session stays open until /sessions/{id}/complete.
     if ($method === 'POST' && $parts === ['choices']) {
         mongo();
         $data = body();
@@ -307,28 +309,91 @@ try {
         $session = ownSessionOrFail($parts[1]);
         if (($session['completed_at'] ?? null) === null) {
             send(409, ['error' => 'This game is not finished yet']);
+        }
+        $outcome = $session['outcome'] ?? null;
+        if ($outcome === null) {   // games finished before snapshots existed
+            $outcome = fullOutcome($session);
+            saveOutcomeSnapshot($parts[1], $outcome);
+        }
+        send(200, ['outcome' => $outcome]);
     }
-    $outcome = $session['outcome'] ?? null;
-    if ($outcome === null) {   // games finished before snapshots existed
-    $outcome = fullOutcome($session);
-    saveOutcomeSnapshot($parts[1], $outcome);
-    }
-    send(200, ['outcome' => $outcome]);
-    }    
 
     // POST /sessions/{sessionID}/complete
-    // Called once, when every room has been finished (showEnding). Closes the
-    // session and returns the outcome that links the choices to the SQL statistics.
     if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'complete') {
         mongo();
         $session = ownSessionOrFail($parts[1]);
         completeSession($parts[1]);   // does nothing if it was already completed
-    $outcome = $session['outcome'] ?? null;
-    if ($outcome === null) {
-        $outcome = fullOutcome($session);
-        saveOutcomeSnapshot($parts[1], $outcome);
+        $outcome = $session['outcome'] ?? null;
+        if ($outcome === null) {
+            $outcome = fullOutcome($session);
+            saveOutcomeSnapshot($parts[1], $outcome);
+        }
+        send(200, ['finished' => true, 'outcome' => $outcome]);
     }
-    send(200, ['finished' => true, 'outcome' => $outcome]);
+
+    // GET /sessions  -> list all save files for the logged-in player
+    if ($method === 'GET' && $parts === ['sessions']) {
+        $playerID = requireLogin();
+        mongo();
+        send(200, ['saves' => listPlayerSaves($playerID)]);
+    }
+
+    // GET /sessions/{sessionID}  -> load one specific save file
+    if ($method === 'GET' && count($parts) === 2 && $parts[0] === 'sessions') {
+        mongo();
+        $session = ownSessionOrFail($parts[1]);
+        send(200, ['save' => buildResumePayload($session)]);
+    }
+
+    // POST /sessions/{sessionID}/save  -> save into an empty slot or overwrite a chosen slot (max 5)
+    if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'save') {
+        mongo();
+        $session = ownSessionOrFail($parts[1]);
+        $d = body();
+        $currentRoom = isset($d['current_room']) && $d['current_room'] !== null ? (int) $d['current_room'] : null;
+        $currentScene = isset($d['current_scene']) && $d['current_scene'] !== '' ? (string) $d['current_scene'] : null;
+        $tensionPoints = isset($d['tension_points']) ? (int) $d['tension_points'] : 0;
+        $slot = isset($d['slot']) ? (int) $d['slot'] : null;
+        $targetID = isset($d['target_session_id']) && $d['target_session_id'] !== ''
+            ? (string) $d['target_session_id']
+            : null;
+
+        try {
+            if ($targetID !== null && $targetID !== $parts[1]) {
+                $saved = overwriteSessionFromCurrent(
+                    $parts[1],
+                    $targetID,
+                    $session['playerID'],
+                    $currentRoom,
+                    $currentScene,
+                    $tensionPoints,
+                    $slot
+                );
+            } elseif ($targetID === $parts[1] || empty($d['as_new'])) {
+                $saved = saveSessionState($parts[1], $currentRoom, $currentScene, $tensionPoints, $slot);
+            } else {
+                $saved = duplicateSessionAsSave(
+                    $parts[1],
+                    $session['playerID'],
+                    $currentRoom,
+                    $currentScene,
+                    $tensionPoints,
+                    $slot
+                );
+            }
+        } catch (Exception $e) {
+            send(400, ['error' => $e->getMessage()]);
+        }
+
+        send(200, ['saved' => true, 'save' => buildResumePayload($saved, $slot)]);
+    }
+
+    // POST /sessions/{sessionID}/delete  -> delete a save file
+    if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'delete') {
+        mongo();
+        ownSessionOrFail($parts[1]);
+        deleteSession($parts[1]);
+        send(200, ['deleted' => true]);
     }
 
     // POST /sessions   body: {"playerID": "..."}
@@ -351,15 +416,17 @@ try {
     }
 
     // GET /players/{username}
-    $playerID = requireLogin();
-    mongo();
-    $p = getPlayerByUsername($parts[1]);
-    if ($p && $p['playerID'] !== $playerID) {
-        send(403, ['error' => 'Not your account']);
-    }
-    if ($p) {
-        unset($p['password_hash']);
-        send(200, formatDates($p));
+    if ($method === 'GET' && count($parts) === 2 && $parts[0] === 'players') {
+        $playerID = requireLogin();
+        mongo();
+        $p = getPlayerByUsername($parts[1]);
+        if ($p && $p['playerID'] !== $playerID) {
+            send(403, ['error' => 'Not your account']);
+        }
+        if ($p) {
+            unset($p['password_hash']);
+            send(200, formatDates($p));
+        }
     }
 
     // No route match

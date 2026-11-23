@@ -215,3 +215,158 @@
     padding: 0.35rem 0.8rem; border-radius: 999px; background: rgba(29,17,24,0.75); color: #fbf0ec;
     font-family: Georgia, 'Times New Roman', serif; font-size: 0.95rem; }
 .userLogout { font: inherit; color: #f2b8c0; background: none; border: none; cursor: pointer; text-decoration: underline; }
+
+/* ---------- 5-Slot Save & Load Cards ---------- */
+
+.saveList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-height: 390px;
+    overflow-y: auto;
+    margin: 16px 0 20px;
+    padding-right: 4px;
+}
+
+.saveSlotCard {
+    -webkit-appearance: none;
+    appearance: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px 20px;
+    margin: 0;
+    text-align: left;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #f4eeec;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.saveSlotCard:hover:not(:disabled),
+.saveSlotCard:focus-visible:not(:disabled) {
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(255, 255, 255, 0.78);
+    transform: translateX(3px);
+    outline: none;
+}
+
+.saveSlotCard.active {
+    background: rgba(185, 65, 78, 0.14);
+    border-color: rgba(220, 115, 125, 0.65);
+}
+
+.saveSlotCard.active:hover:not(:disabled) {
+    background: rgba(185, 65, 78, 0.22);
+    border-color: rgba(240, 145, 155, 0.9);
+}
+
+.saveSlotCard.empty {
+    background: rgba(255, 255, 255, 0.02);
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(244, 238, 236, 0.65);
+}
+
+.saveSlotCard.empty:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.6);
+    color: #f4eeec;
+}
+
+.saveSlotCard.empty:disabled {
+    cursor: default;
+    opacity: 0.42;
+}
+
+.saveSlotHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.saveSlotTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.saveSlotBadge {
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 9px;
+    border-radius: 999px;
+    color: #f4eeec;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.saveSlotCurrent {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #ffd6da;
+    background: rgba(195, 68, 82, 0.32);
+    border: 1px solid rgba(225, 110, 122, 0.55);
+}
+
+.saveSlotName {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f4eeec;
+}
+
+.saveSlotAction {
+    font-size: 0.88rem;
+    color: rgba(244, 238, 236, 0.6);
+    white-space: nowrap;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.saveSlotCard:hover:not(:disabled) .saveSlotAction,
+.saveSlotCard:focus-visible:not(:disabled) .saveSlotAction {
+    color: #ffffff;
+    transform: translateX(2px);
+}
+
+.saveSlotMeta {
+    font-size: 0.86rem;
+    color: rgba(244, 238, 236, 0.72);
+}
+
+.saveToast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 11px 18px;
+    border-radius: 10px;
+    background: rgba(28, 18, 21, 0.94);
+    color: #f4eeec;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    font-size: 0.92rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 9999;
+}
+
+.saveToast.show {
+    opacity: 1;
+}

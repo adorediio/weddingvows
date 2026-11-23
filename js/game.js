@@ -1269,7 +1269,9 @@ const MAX_SAVE_SLOTS = 5;
         location.reload();
     }
 
-    // ---------- final dashboard ----------
+   // ---------- final dashboard (4-slide carousel + data visuals) ----------
+
+    let dashKeyHandler = null;
 
     async function showEnding() {
         setCardsVisible(false);
@@ -1298,48 +1300,97 @@ const MAX_SAVE_SLOTS = 5;
         return Number(n).toFixed(1) + '%';
     }
 
-    // The sentences shown under a rung. Duration labels come from the database ("Under 5 Years").
-    function rungFacts(o, r) {
-        const facts = [];
+   // Clean, editorial stat strip inside each escalation rung (preserves all figures)
+    function buildRungVisuals(o, r) {
+        const strip = el('div', 'rungStats');
+
+        // 1. National share & rank
         if (r.national) {
-            facts.push('In ' + o.year + ', ' + percent(r.national.percent) + ' of divorces in Singapore (' +
-                r.national.count.toLocaleString() + ') cited it, the number ' + r.national.rank + ' reason.');
+            const col = el('div', 'rungStatCol');
+            col.appendChild(el('div', 'rungStatLbl', 'SG ' + o.year + ' Share'));
+            col.appendChild(el('div', 'rungStatBig', percent(r.national.percent)));
+            col.appendChild(el('div', 'rungStatSub',
+                r.national.count.toLocaleString() + ' cases · Rank #' + r.national.rank));
+            strip.appendChild(col);
         }
-        if (r.trend && r.trend.from_year !== r.trend.to_year) {
-            const dir = r.trend.to_count > r.trend.from_count ? 'Up' :
-                        r.trend.to_count < r.trend.from_count ? 'Down' : 'Unchanged';
-            facts.push(dir + ' from ' + r.trend.from_count.toLocaleString() + ' in ' + r.trend.from_year +
-                ' to ' + r.trend.to_count.toLocaleString() + ' in ' + r.trend.to_year + '.');
-        }
+
+        // 2. Peak marriage duration
         if (r.peak_duration) {
-            facts.push('Most often in marriages of ' + r.peak_duration.label.toLowerCase() + ' (' +
-                percent(r.peak_duration.share) + ' of these divorces).');
+            const col = el('div', 'rungStatCol');
+            col.appendChild(el('div', 'rungStatLbl', 'Most Common Duration'));
+            col.appendChild(el('div', 'rungStatBig', r.peak_duration.label));
+            col.appendChild(el('div', 'rungStatSub',
+                percent(r.peak_duration.share) + ' of these divorces'));
+            strip.appendChild(col);
         }
-        return facts;
+
+        // 3. Multi-year trend (from_year vs to_year)
+        if (r.trend && r.trend.from_year !== r.trend.to_year) {
+            const col = el('div', 'rungStatCol');
+            const diff = r.trend.to_count - r.trend.from_count;
+            const deltaText = diff > 0
+                ? '▲ +' + diff.toLocaleString() + ' since ' + r.trend.from_year
+                : (diff < 0
+                    ? '▼ ' + diff.toLocaleString() + ' since ' + r.trend.from_year
+                    : 'Unchanged since ' + r.trend.from_year);
+
+            col.appendChild(el('div', 'rungStatLbl', r.trend.from_year + ' → ' + r.trend.to_year + ' Cases'));
+            col.appendChild(el('div', 'rungStatBig',
+                r.trend.from_count.toLocaleString() + ' → ' + r.trend.to_count.toLocaleString()));
+            col.appendChild(el('div', 'rungStatSub ' + (diff > 0 ? 'up' : (diff < 0 ? 'down' : '')), deltaText));
+            strip.appendChild(col);
+        }
+
+        return strip;
     }
 
     function buildLadder(o) {
         const section = el('section', 'ladder');
         const reached = o.ladder.filter(function (r) { return r.lit; });
+        const total = o.ladder.length;
 
-        section.appendChild(el('h3', 'dashHead', 'Warning signs: the escalation ladder'));
+        // 4-step graduated escalation meter
+        const meterWrap = el('div', 'ladderMeterWrap');
+        const meterHead = el('div', 'ladderMeterHead');
+        meterHead.appendChild(el('span', 'dashHeadInline', 'Warning signs: the escalation ladder'));
+        meterHead.appendChild(el('span', 'ladderMeterScore', reached.length + ' of ' + total + ' rungs reached'));
+        meterWrap.appendChild(meterHead);
+
+        const meter = el('div', 'ladderMeter');
+        o.ladder.forEach(function (r, idx) {
+            const step = Math.min(4, idx + 1);
+            const seg = el('div', 'ladderSeg step-' + step + (r.lit ? ' lit' : ''));
+            seg.title = r.title + (r.lit ? ' (Reached)' : ' (Not reached)');
+            meter.appendChild(seg);
+        });
+        meterWrap.appendChild(meter);
+        section.appendChild(meterWrap);
+
         section.appendChild(el('p', 'dashText',
-            'Arguments rarely jump to the top. They climb. Your story reached ' + reached.length + ' of ' +
-            o.ladder.length + ' rungs. Beside each is the divorce reason that comes closest to it, with the figures from Singapore.'));
+            'Arguments rarely jump to the top. They climb. Beside each rung is the Singapore divorce reason that comes closest to it.'));
 
-        // Highest rung on top, like a ladder seen from the side
+        // Highest rung on top (step-4 down to step-1)
         const list = el('ol', 'ladderList');
-        o.ladder.slice().reverse().forEach(function (r) {
-            const li = el('li', 'rung' + (r.lit ? ' lit' : ''));
+        o.ladder.slice().reverse().forEach(function (r, revIdx) {
+            const step = Math.max(1, Math.min(4, total - revIdx));
+            const li = el('li', 'rung step-' + step + (r.lit ? ' lit' : ''));
 
             const head = el('div', 'rungHead');
-            head.appendChild(el('span', 'rungTitle', r.title));
-            head.appendChild(el('span', 'rungState', r.lit ? 'Your story reached this' : 'Not reached'));
+            const titleGroup = el('div', 'rungTitleGroup');
+            titleGroup.appendChild(el('span', 'rungStepNum', '0' + step));
+            titleGroup.appendChild(el('span', 'rungTitle', r.title));
+            head.appendChild(titleGroup);
+            head.appendChild(el('span', 'rungState', r.lit ? 'Reached' : 'Not reached'));
             li.appendChild(head);
 
             li.appendChild(el('p', 'rungBlurb', r.blurb));
-            li.appendChild(el('p', 'rungReason', 'Closest divorce reason: ' + r.reason));
-            rungFacts(o, r).forEach(function (f) { li.appendChild(el('p', 'rungFact', f)); });
+
+            const reasonRow = el('div', 'rungReasonRow');
+            reasonRow.appendChild(el('span', 'rungReasonTag', 'Closest divorce reason'));
+            reasonRow.appendChild(el('span', 'rungReasonName', r.reason));
+            li.appendChild(reasonRow);
+
+            li.appendChild(buildRungVisuals(o, r));
             list.appendChild(li);
         });
         section.appendChild(list);
@@ -1347,12 +1398,152 @@ const MAX_SAVE_SLOTS = 5;
         section.appendChild(el('p', 'dashSource',
             'Reasons are what couples recorded when they divorced. Matching a behaviour to a reason is a guide, not a diagnosis.'));
 
-        // If the story reached the top rung, put the helplines right there
         if (o.ladder[o.ladder.length - 1].lit) section.appendChild(buildSupport());
         return section;
     }
 
-    // Comparison age chart
+    // Slide 2: Visual bar breakdown of player's theme points + KPI highlight cards
+    function buildThemesSlide(o) {
+        const box = el('section', 'dashSlideSection');
+        const themes = Object.entries(o.scores || {});
+
+        box.appendChild(el('h3', 'dashHead', 'Themes your story touched'));
+
+        if (themes.length === 0) {
+            box.appendChild(el('p', 'dashText', 'Your choices stayed mostly neutral, so no single theme stood out.'));
+            return box;
+        }
+
+        const totalPts = themes.reduce(function (sum, t) { return sum + Number(t[1]); }, 0) || 1;
+        const maxPts = Math.max.apply(null, themes.map(function (t) { return Number(t[1]); }).concat([1]));
+
+        // Horizontal bar graph of player's own choice points
+        const chart = el('div', 'themeChart');
+        themes.forEach(function (t, idx) {
+            const pts = Number(t[1]);
+            const sharePct = Math.round((pts / totalPts) * 100);
+            const isTop = idx === 0;
+
+            const row = el('div', 'bar' + (isTop ? ' mine' : ''));
+            row.appendChild(el('span', 'barLabel', t[0]));
+            const track = el('span', 'barTrack');
+            const fill = el('span', 'barFill');
+            fill.style.width = (pts / maxPts * 100) + '%';
+            track.appendChild(fill);
+            row.appendChild(track);
+            row.appendChild(el('span', 'barValueWide', pts + (pts === 1 ? ' pt' : ' pts') + ' (' + sharePct + '%)'));
+            chart.appendChild(row);
+        });
+        box.appendChild(chart);
+
+        // KPI cards for the player's primary theme against Singapore national stats
+        if (o.national_match) {
+            const m = o.national_match;
+            const kpiGrid = el('div', 'kpiGrid');
+
+            const kpis = [
+                { num: m.reason, lbl: 'Your primary theme', accent: true },
+                { num: percent(m.percent), lbl: 'Of SG divorces in ' + o.year },
+                { num: m.count.toLocaleString(), lbl: 'Recorded cases in ' + o.year },
+                { num: '#' + m.rank, lbl: 'National rank in Singapore' }
+            ];
+
+            kpis.forEach(function (k) {
+                const card = el('div', 'kpiCard' + (k.accent ? ' accent' : ''));
+                card.appendChild(el('div', 'kpiNum' + (k.accent ? ' kpiText' : ''), k.num));
+                card.appendChild(el('div', 'kpiLbl', k.lbl));
+                kpiGrid.appendChild(card);
+            });
+            box.appendChild(kpiGrid);
+
+            box.appendChild(el('p', 'dashText',
+                'Your story touched most on ' + m.reason.toLowerCase() + '. In ' + o.year + ', ' + percent(m.percent) +
+                ' of divorces in Singapore cited it (' + m.count.toLocaleString() + ' divorces), the number ' +
+                m.rank + ' reason.'));
+        }
+
+        return box;
+    }
+
+    // Slide 3: National horizontal bars + 100% stacked composition strip
+    function buildNationalSlide(o) {
+        const box = el('section', 'dashSlideSection');
+        const rows = (o.national_top3 || []).slice();
+        if (o.national_match && !rows.some(function (r) { return r.reason === o.national_match.reason; })) {
+            rows.push(o.national_match);
+        }
+
+        box.appendChild(el('h3', 'dashHead', 'Most common reasons in ' + o.year));
+
+        // 100% stacked share bar showing how much of all SG divorces these reasons make up
+        const palette = ['#e8c27a', '#d98a94', '#c9877b', '#e0505a'];
+        const stripWrap = el('div', 'stackWrap');
+        const strip = el('div', 'stackBar');
+        const legend = el('div', 'stackLegend');
+        let shownPct = 0;
+
+        rows.forEach(function (r, idx) {
+            const pct = Number(r.percent);
+            shownPct += pct;
+            const isMine = o.main_reason === r.reason;
+            const color = isMine ? '#e0505a' : palette[idx % palette.length];
+
+            const seg = el('div', 'stackSeg');
+            seg.style.width = Math.min(100, pct) + '%';
+            seg.style.background = color;
+            seg.title = r.reason + ': ' + percent(pct);
+            strip.appendChild(seg);
+
+            const item = el('span', 'stackLegendItem');
+            const dot = el('span', 'cmpKey');
+            dot.style.background = color;
+            item.append(dot, document.createTextNode(r.reason + ' (' + percent(pct) + ')'));
+            legend.appendChild(item);
+        });
+
+        const otherPct = Math.max(0, 100 - shownPct);
+        if (otherPct > 0.1) {
+            const otherSeg = el('div', 'stackSeg other');
+            otherSeg.style.width = otherPct + '%';
+            otherSeg.title = 'All other reasons: ' + percent(otherPct);
+            strip.appendChild(otherSeg);
+
+            const item = el('span', 'stackLegendItem muted');
+            const dot = el('span', 'cmpKey other');
+            item.append(dot, document.createTextNode('Other reasons (' + percent(otherPct) + ')'));
+            legend.appendChild(item);
+        }
+
+        stripWrap.append(
+            el('div', 'stackCaption', 'Share of all divorces in Singapore (' + o.year + ')'),
+            strip,
+            legend
+        );
+        box.appendChild(stripWrap);
+
+        // Detailed horizontal bars
+        const max = Math.max.apply(null, rows.map(function (r) { return Number(r.percent); }).concat([1]));
+        rows.forEach(function (r) {
+            const isMine = o.main_reason === r.reason;
+            const row = el('div', 'bar' + (isMine ? ' mine' : ''));
+            const lbl = el('span', 'barLabel', r.reason);
+            if (isMine) lbl.appendChild(el('span', 'mineTag', 'Your main theme'));
+            row.appendChild(lbl);
+
+            const track = el('span', 'barTrack');
+            const fill = el('span', 'barFill');
+            fill.style.width = (Number(r.percent) / max * 100) + '%';
+            track.appendChild(fill);
+            row.appendChild(track);
+            row.appendChild(el('span', 'barValue', percent(r.percent)));
+            box.appendChild(row);
+        });
+
+        box.appendChild(el('p', 'dashSource', 'Source: Singapore Department of Statistics (SingStat).'));
+        return box;
+    }
+
+    // Comparison age chart (Slide 4 when age group was selected)
     function buildAgeChart(ac) {
         const box = el('div', 'cmp');
         const legend = el('div', 'cmpLegend');
@@ -1392,7 +1583,36 @@ const MAX_SAVE_SLOTS = 5;
 
         setTimeout(function () {
             fills.forEach(function (f) { f.fill.style.height = f.h + '%'; });
-        }, 150);
+        }, 120);
+        return box;
+    }
+
+    function buildAgeSlide(ac) {
+        const box = el('section', 'dashSlideSection');
+        box.appendChild(el('h3', 'dashHead', 'You and other players aged ' + ac.age_group));
+
+        const kpiGrid = el('div', 'kpiGrid twoCol');
+        [
+            { num: String(ac.group_games), lbl: 'Finished runs (' + ac.age_group + ')', accent: true },
+            { num: String(ac.all_games), lbl: 'Total finished runs (all ages)' }
+        ].forEach(function (k) {
+            const card = el('div', 'kpiCard' + (k.accent ? ' accent' : ''));
+            card.appendChild(el('div', 'kpiNum', k.num));
+            card.appendChild(el('div', 'kpiLbl', k.lbl));
+            kpiGrid.appendChild(card);
+        });
+        box.appendChild(kpiGrid);
+
+        if (!ac.enough) {
+            box.appendChild(el('p', 'dashText',
+                'Only ' + ac.group_games + ' finished game' + (ac.group_games === 1 ? '' : 's') + ' from players aged ' +
+                ac.age_group + ' so far. The comparison appears once ' + ac.min_sample + ' have finished.'));
+        } else {
+            box.appendChild(el('p', 'dashText',
+                'The main theme of each finished game. Players aged ' + ac.age_group + ' (' + ac.group_games +
+                ' games) against all players (' + ac.all_games + ' games).'));
+            box.appendChild(buildAgeChart(ac));
+        }
         return box;
     }
 
@@ -1407,73 +1627,108 @@ const MAX_SAVE_SLOTS = 5;
             'This is not a prediction. It shows how often couples in Singapore gave each reason when they divorced in ' +
             o.year + '.'));
 
-        // The escalation ladder: the rungs this story reached, each with its SQL figures
-        if (o.ladder && o.ladder.length) wrap.appendChild(buildLadder(o));
-
-        // Themes the player met
-        const themes = Object.entries(o.scores || {});
-        wrap.appendChild(el('h3', 'dashHead', 'Themes your story touched'));
-        if (themes.length === 0) {
-            wrap.appendChild(el('p', 'dashText', 'Your choices stayed mostly neutral, so no single theme stood out.'));
-        } else {
-            const ul = el('ul', 'dashThemes');
-            themes.forEach(function (t) {
-                ul.appendChild(el('li', null, t[0] + ' (' + t[1] + (t[1] === 1 ? ' point)' : ' points)')));
-            });
-            wrap.appendChild(ul);
+        // Build the carousel slides
+        const slides = [];
+        if (o.ladder && o.ladder.length) {
+            slides.push({ label: '1. Warning Signs', render: function () { return buildLadder(o); } });
+        }
+        slides.push({ label: '2. Your Themes', render: function () { return buildThemesSlide(o); } });
+        slides.push({ label: '3. SG Figures', render: function () { return buildNationalSlide(o); } });
+        if (o.age_comparison) {
+            slides.push({ label: '4. Age Peers', render: function () { return buildAgeSlide(o.age_comparison); } });
         }
 
-        // The player's main theme against the national row
-        if (o.national_match) {
-            const m = o.national_match;
-            wrap.appendChild(el('p', 'dashText',
-                'Your story touched most on ' + m.reason.toLowerCase() + '. In ' + o.year + ', ' + percent(m.percent) +
-                ' of divorces in Singapore cited it (' + m.count.toLocaleString() + ' divorces), the number ' +
-                m.rank + ' reason.'));
-        }
+        let currentSlide = 0;
 
-        // Bars: national top three, plus the player's main reason if it is not among them
-        const rows = (o.national_top3 || []).slice();
-        if (o.national_match && !rows.some(function (r) { return r.reason === o.national_match.reason; })) {
-            rows.push(o.national_match);
-        }
-        wrap.appendChild(el('h3', 'dashHead', 'Most common reasons in ' + o.year));
-        const max = Math.max.apply(null, rows.map(function (r) { return Number(r.percent); }).concat([1]));
-        rows.forEach(function (r) {
-            const row = el('div', 'bar' + (o.main_reason === r.reason ? ' mine' : ''));
-            row.appendChild(el('span', 'barLabel', r.reason));
-            const track = el('span', 'barTrack');
-            const fill = el('span', 'barFill');
-            fill.style.width = (Number(r.percent) / max * 100) + '%';
-            track.appendChild(fill);
-            row.appendChild(track);
-            row.appendChild(el('span', 'barValue', percent(r.percent)));
-            wrap.appendChild(row);
+        // Top slide tabs
+        const tabs = el('div', 'carouselTabs');
+        tabs.setAttribute('role', 'tablist');
+        const tabButtons = slides.map(function (s, idx) {
+            const btn = el('button', 'carouselTab', s.label);
+            btn.type = 'button';
+            btn.setAttribute('role', 'tab');
+            btn.addEventListener('click', function () { goToSlide(idx); });
+            tabs.appendChild(btn);
+            return btn;
+        });
+        wrap.appendChild(tabs);
+
+        // Active slide stage
+        const stage = el('div', 'carouselStage');
+        wrap.appendChild(stage);
+
+        // Bottom carousel navigation (Prev / Dots / Next)
+        const nav = el('div', 'carouselNav');
+        const prevBtn = el('button', 'storyChoice carouselBtn', '← Previous');
+        prevBtn.type = 'button';
+        prevBtn.addEventListener('click', function () {
+            if (currentSlide > 0) goToSlide(currentSlide - 1);
         });
 
-        wrap.appendChild(el('p', 'dashSource', 'Source: Singapore Department of Statistics (SingStat).'));
+        const dots = el('div', 'carouselDots');
+        const dotButtons = slides.map(function (s, idx) {
+            const d = el('button', 'carouselDot');
+            d.type = 'button';
+            d.setAttribute('aria-label', 'Go to ' + s.label);
+            d.addEventListener('click', function () { goToSlide(idx); });
+            dots.appendChild(d);
+            return d;
+        });
 
-        const ac = o.age_comparison;
-        if (ac) {
-            wrap.appendChild(el('h3', 'dashHead', 'You and other players aged ' + ac.age_group));
-            if (!ac.enough) {
-                wrap.appendChild(el('p', 'dashText',
-                    'Only ' + ac.group_games + ' finished game' + (ac.group_games === 1 ? '' : 's') + ' from players aged ' +
-                    ac.age_group + ' so far. The comparison appears once ' + ac.min_sample + ' have finished.'));
-            } else {
-                wrap.appendChild(el('p', 'dashText',
-                    'The main theme of each finished game. Players aged ' + ac.age_group + ' (' + ac.group_games +
-                    ' games) against all players (' + ac.all_games + ' games).'));
-                wrap.appendChild(buildAgeChart(ac));
-            }
-        }
+        const nextBtn = el('button', 'storyChoice carouselBtn', 'Next →');
+        nextBtn.type = 'button';
+        nextBtn.addEventListener('click', function () {
+            if (currentSlide < slides.length - 1) goToSlide(currentSlide + 1);
+        });
 
+        nav.append(prevBtn, dots, nextBtn);
+        wrap.appendChild(nav);
+
+        // Always-available Play Again button at the bottom
         const again = el('button', 'storyChoice endingBtn', 'Play again');
         again.type = 'button';
         again.addEventListener('click', playAgain);
         wrap.appendChild(again);
 
+        function goToSlide(idx) {
+            currentSlide = Math.max(0, Math.min(slides.length - 1, idx));
+            stage.replaceChildren();
+            const slideBody = el('div', 'carouselSlide');
+            slideBody.appendChild(slides[currentSlide].render());
+            stage.appendChild(slideBody);
+
+            tabButtons.forEach(function (b, i) {
+                const active = i === currentSlide;
+                b.classList.toggle('active', active);
+                b.setAttribute('aria-selected', String(active));
+            });
+            dotButtons.forEach(function (d, i) {
+                d.classList.toggle('active', i === currentSlide);
+            });
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === slides.length - 1;
+            nextBtn.textContent = currentSlide === slides.length - 1
+                ? 'End of summary'
+                : 'Next: ' + slides[currentSlide + 1].label.replace(/^\d+\.\s*/, '') + ' →';
+
+            if (story && story.root) {
+                story.root.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+            }
+        }
+
+        if (dashKeyHandler) {
+            document.removeEventListener('keydown', dashKeyHandler);
+        }
+        dashKeyHandler = function (ev) {
+            if (!story || !story.root.classList.contains('dashMode')) return;
+            if (ev.key === 'ArrowRight' && currentSlide < slides.length - 1) goToSlide(currentSlide + 1);
+            if (ev.key === 'ArrowLeft' && currentSlide > 0) goToSlide(currentSlide - 1);
+        };
+        document.addEventListener('keydown', dashKeyHandler);
+
         story.body.appendChild(wrap);
+        goToSlide(0);
         title.focus({ preventScroll: true });
     }
 

@@ -1,0 +1,439 @@
+{
+  "room": 4,
+  "title": "Argument",
+  "maxTension": 7,
+  "start": "r4_s1",
+  "scenes": {
+    "r4_s1": {
+      "text": "“Why did you take my phone?” you say. He holds it up. “Why are THESE on it?” His voice keeps climbing, and the kitchen seems to shrink around it.",
+      "choices": [
+        {
+          "id": "r4_01", "recap": "matched his volume",
+          "label": "Match his volume",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r4_s2a"
+        },
+        {
+          "id": "r4_02", "recap": "kept their voice low and asked him to stop",
+          "label": "Keep your voice low and ask him to stop",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_s2b"
+        },
+        {
+          "id": "r4_03", "recap": "walked into another room",
+          "label": "Walk into another room",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_s2c"
+        }
+      ]
+    },
+    "r4_s2a": {
+      "text": "“Liar.” The word lands first, then others, each one louder than the last. You stop hearing what he is saying and only hear how loudly he says it.",
+      "sfx": [
+        "shouting"
+      ],
+      "choices": [
+        {
+          "id": "r4_04",
+          "label": "Throw an insult back",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r4_s3a"
+        },
+        {
+          "id": "r4_05",
+          "label": "“I won’t be spoken to like this.”",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r4_s3b"
+        },
+        {
+          "id": "r4_06",
+          "label": "Leave the kitchen",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_s2c"
+        }
+      ]
+    },
+    "r4_s2b": {
+      "text": "He hesitates. For a second it could go either way.",
+      "choices": [
+        {
+          "id": "r4_07",
+          "label": "Offer to talk again tomorrow",
+          "reason": null,
+          "weight": 0,
+          "tension": -1,
+          "next": "r4_end_cooloff"
+        },
+        {
+          "id": "r4_08",
+          "label": "Say the one thing you know will hurt",
+          "reason": "Unreasonable Behaviour",
+          "weight": 1,
+          "tension": 1,
+          "next": "r4_s3a"
+        },
+        {
+          "id": "r4_09",
+          "label": "Say nothing and wait",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_s3b"
+        }
+      ]
+    },
+    "r4_s2c": {
+      "text": "You close the door behind you. His footsteps stop on the other side. “Don’t you walk away from me.”",
+      "choices": [
+        {
+          "id": "r4_10",
+          "label": "“I’ll talk when you are calm.”",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_end_apart"
+        },
+        {
+          "id": "r4_11",
+          "label": "Open the door",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r4_s3b"
+        }
+      ]
+    },
+    "r4_s3a": {
+      "text": "He storms into the hallway. The door slams so hard the picture frames rattle on the wall, and the sound goes through you.",
+      "sfx": [
+        "door_slam"
+      ],
+      "impact": true,
+      "choices": [
+        {
+          "id": "r4_12",
+          "label": "Follow him",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r4_s4a"
+        },
+        {
+          "id": "r4_13",
+          "label": "Stay where you are. Breathe.",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_s4b"
+        },
+        {
+          "id": "r4_14",
+          "label": "Pick up your keys and go",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_end_walkout"
+        }
+      ]
+    },
+    "r4_s3b": {
+      "text": "He picks up a mug and turns it in his hands. Then he sets it down hard enough to chip it. The sound is small. You flinch anyway.",
+      "choices": [
+        {
+          "id": "r4_15",
+          "label": "Step back and keep your hands where he can see them",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r4_s4b"
+        },
+        {
+          "id": "r4_16",
+          "label": "Tell him he is scaring you",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r4_s4d"
+        },
+        {
+          "id": "r4_17",
+          "label": "Reach for your phone to call someone",
+          "reason": null,
+          "weight": 0,
+          "tension": 2,
+          "next": "r4_s4a"
+        }
+      ]
+    },
+    "r4_s4d": {
+      "text": "For a moment he looks at his own hands. Then the look is gone. “Scaring you? Look what you made me do.”",
+      "choices": [
+        {
+          "id": "r4_18",
+          "label": "Tell him you are leaving until he calms down",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r4_end_walkout"
+        },
+        {
+          "id": "r4_19",
+          "label": "Stay and try to calm him",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r4_s4b"
+        }
+      ]
+    },
+    "r4_s4a": {
+      "text": "In the next room something crashes. Then another. Glass, a drawer pulled out and thrown, a chair across the floor. This is no longer an argument, and you are standing in the doorway.",
+      "sfx": [
+        "thrown_objects",
+        {
+          "id": "glass_break",
+          "delay": 700
+        },
+        {
+          "id": "man_scream",
+          "delay": 1500,
+          "volume": 0.7
+        }
+      ],
+      "impact": true,
+      "choices": [
+        {
+          "id": "r4_20",
+          "label": "Call for help",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_help"
+        },
+        {
+          "id": "r4_21",
+          "label": "Leave the house",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_leave"
+        },
+        {
+          "id": "r4_22",
+          "label": "Freeze",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_freeze"
+        },
+        {
+          "id": "r4_23",
+          "label": "Step into the room",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 2,
+          "next": "r4_s5a"
+        }
+      ]
+    },
+    "r4_s4b": {
+      "text": "The crash comes from the next room. You are not in it, not yet. You can hear everything: the glass, the thrown things, his breathing between each one.",
+      "sfx": [
+        "thrown_objects",
+        {
+          "id": "glass_break",
+          "delay": 700
+        },
+        {
+          "id": "man_scream",
+          "delay": 1500,
+          "volume": 0.7
+        }
+      ],
+      "impact": true,
+      "choices": [
+        {
+          "id": "r4_24",
+          "label": "Call for help",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_help"
+        },
+        {
+          "id": "r4_25",
+          "label": "Slip out through the front door",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_leave"
+        },
+        {
+          "id": "r4_26",
+          "label": "Lock yourself in the bedroom",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_s5b"
+        }
+      ]
+    },
+    "r4_s5a": {
+      "text": "He sweeps his arm across the shelf. Photographs, the vase from your wedding, all of it on the floor at once. You scream before you know you are going to.",
+      "sfx": [
+        {
+          "id": "scream"
+        },
+        {
+          "id": "glass_break",
+          "delay": 400
+        },
+        {
+          "id": "thrown_objects",
+          "delay": 900
+        },
+        {
+          "id": "man_scream",
+          "delay": 1200,
+          "volume": 0.7
+        }
+      ],
+      "impact": true,
+      "choices": [
+        {
+          "id": "r4_27",
+          "label": "Run for the door",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_leave"
+        },
+        {
+          "id": "r4_28",
+          "label": "Shout for help so the neighbours can hear",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_neighbour"
+        },
+        {
+          "id": "r4_29",
+          "label": "Curl up and cover your head",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_freeze"
+        }
+      ]
+    },
+    "r4_s5b": {
+      "text": "You turn the lock. The door shudders once under his hand. “Open it.” His voice is very close, and very low.",
+      "sfx": [
+        "thrown_objects",
+        {
+          "id": "man_scream",
+          "delay": 1000,
+          "volume": 0.6
+        }
+      ],
+      "choices": [
+        {
+          "id": "r4_30",
+          "label": "Call for help from behind the door",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_help"
+        },
+        {
+          "id": "r4_31",
+          "label": "Open the window and shout",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 1,
+          "next": "r4_end_neighbour"
+        },
+        {
+          "id": "r4_32",
+          "label": "Stay silent until it passes",
+          "reason": "Domestic Violence & Abuses",
+          "weight": 3,
+          "tension": 0,
+          "next": "r4_end_freeze"
+        }
+      ]
+    },
+    "r4_end_apart": {
+      "text": "He goes quiet on the other side of the door. Nothing has been settled, but the shouting has stopped, for now.",
+      "choices": [],
+      "ending": {
+        "title": "Separate rooms",
+        "tone": "uneasy"
+      }
+    },
+    "r4_end_cooloff": {
+      "text": "He goes quiet. Neither of you has won, but it stopped. Now you have to decide what you will say in the morning.",
+      "choices": [],
+      "ending": {
+        "title": "Tomorrow",
+        "tone": "hopeful"
+      }
+    },
+    "r4_end_walkout": {
+      "text": "You close the front door quietly behind you. The night air is cool. You don’t know where you will go yet, only that you don’t want to be in that room.",
+      "choices": [],
+      "ending": {
+        "title": "Keys in hand",
+        "tone": "uneasy"
+      }
+    },
+    "r4_end_help": {
+      "text": "A voice on the line asks if you are safe. It is the first sensible question anyone has asked tonight.",
+      "choices": [],
+      "ending": {
+        "title": "Help arrives",
+        "tone": "dark",
+        "showSupport": true
+      }
+    },
+    "r4_end_leave": {
+      "text": "The night air is cold. You do not know where you are going yet. You only know you are not staying.",
+      "choices": [],
+      "ending": {
+        "title": "Out the door",
+        "tone": "dark",
+        "showSupport": true
+      }
+    },
+    "r4_end_freeze": {
+      "text": "Time stretches. Afterwards nothing in the house is where it was. Freezing is not a failure. It is what many people’s bodies do.",
+      "choices": [],
+      "ending": {
+        "title": "Frozen",
+        "tone": "dark",
+        "showSupport": true
+      }
+    },
+    "r4_end_neighbour": {
+      "text": "A knock at the door, then another, firmer. A neighbour’s voice: “Is everything all right?” The house goes quiet. You do not have to explain anything yet.",
+      "choices": [],
+      "ending": {
+        "title": "A knock",
+        "tone": "dark",
+        "showSupport": true
+      }
+    }
+  }
+}

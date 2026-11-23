@@ -17,18 +17,26 @@ function getDb() {
     return $db;
 }
 
-function createPlayer(string $username, string $email): string {
+function createPlayer(string $username, string $email, ?string $ageGroup = null): string {
     $players = getDb()->players;
     if ($players->findOne(['username' => $username])) {
         throw new Exception('Username already exists');
     }
     $playerID = 'p' . uniqid();
-    $players->insertOne([
+    $player = [
         'playerID'   => $playerID,
         'username'   => $username,
         'email'      => $email,
         'created_at' => new UTCDateTime(),
-    ]);
+    ];
+    // The "personal start" profile. Only an age group is kept, never an exact age.
+    if ($ageGroup !== null) {
+        $player['profile'] = [
+            'age_group' => $ageGroup,
+            'set_at'    => new UTCDateTime(),
+        ];
+    }
+    $players->insertOne($player);
     return $playerID;
 }
 
@@ -68,6 +76,13 @@ function saveChoice(string $sessionID, string $choiceID, string $sceneID, string
 
 function getSession(string $sessionID): ?array {
     return getDb()->game_sessions->findOne(['sessionID' => $sessionID], TYPE_MAP);
+}
+
+function saveOutcomeSnapshot(string $sessionID, array $outcome): void {
+    getDb()->game_sessions->updateOne(
+        ['sessionID' => $sessionID, 'outcome' => ['$exists' => false]],
+        ['$set' => ['outcome' => $outcome]]
+    );
 }
 
 function completeSession(string $sessionID): bool {
@@ -134,4 +149,143 @@ function getLatestSession(string $playerID, bool $unfinishedOnly = false): ?arra
         $filter,
         array_merge(TYPE_MAP, ['sort' => ['started_at' => -1]])
     );
+}
+
+
+/**
+ * How every player answered one scene, across all sessions.
+ * Returns [choiceID => count] for the choices that were picked at least once,
+ * e.g. ['r4_01' => 12, 'r4_03' => 5].
+ *
+ * $unwind turns each session's choices array into one row per choice,
+ * $match keeps only this scene, $group counts the rows per choiceID.
+ */
+function countChoicesForScene(string $sceneID): array {
+    $cursor = getDb()->game_sessions->aggregate([
+        ['$match'  => ['choices.sceneID' => $sceneID]],   // lets an index skip unrelated sessions
+        ['$unwind' => '$choices'],
+        ['$match'  => ['choices.sceneID' => $sceneID]],   // drop the other choices of those sessions
+        ['$group'  => ['_id' => '$choices.choiceID', 'count' => ['$sum' => 1]]],
+    ], TYPE_MAP);
+
+    $counts = [];
+    foreach ($cursor as $row) {
+        $counts[$row['_id']] = (int) $row['count'];
+    }
+    return $counts;
+}
+
+function getCommunityPulse(): array {
+    $pipeline = [
+        ['$facet' => [
+            'totals' => [
+                ['$group' => [
+                    '_id'           => null,
+                    'sessions'      => ['$sum' => 1],
+                    'completed'     => ['$sum' => ['$cond' => [['$ne' => ['$completed_at', null]], 1, 0]]],
+                    'total_choices' => ['$sum' => ['$size' => ['$ifNull' => ['$choices', []]]]],
+                ]],
+            ],
+            'secret_sessions' => [
+                ['$match' => ['choices.choiceID' => ['$in' => ['r2_06', 'r2_07', 'r2_11', 'r2_17', 'r2_25']]]],
+                ['$count' => 'n'],
+            ],
+            'bills_sessions' => [
+                ['$match' => ['choices.choiceID' => ['$in' => ['r1_04', 'r1_06', 'r1_15']]]],
+                ['$count' => 'n'],
+            ],
+        ]],
+    ];
+
+    $res = getDb()->game_sessions->aggregate($pipeline, TYPE_MAP)->toArray();
+    $facet = $res[0] ?? [];
+    $totals = $facet['totals'][0] ?? ['sessions' => 0, 'completed' => 0, 'total_choices' => 0];
+    $sessions = max(1, (int) $totals['sessions']);
+    $secretCount = (int) ($facet['secret_sessions'][0]['n'] ?? 0);
+    $billsCount  = (int) ($facet['bills_sessions'][0]['n'] ?? 0);
+
+    return [
+        'total_sessions'     => (int) $totals['sessions'],
+        'completed_sessions' => (int) $totals['completed'],
+        'avg_choices'        => $totals['sessions'] > 0 ? round($totals['total_choices'] / $totals['sessions'], 1) : 0,
+        'secret_percent'     => round($secretCount * 100 / $sessions),
+        'bills_percent'      => round($billsCount * 100 / $sessions),
+    ];
+}
+
+// ------------------------------------------------------------------
+// Accounts, login and "Continue"
+// ------------------------------------------------------------------
+function createAccount(string $username, string $passwordHash, ?string $ageGroup = null): string {
+    $players = getDb()->players;
+    $players->createIndex(['username' => 1], ['unique' => true]);
+
+    $playerID = 'p' . uniqid();
+    $player = [
+        'playerID'      => $playerID,
+        'username'      => $username,
+        'password_hash' => $passwordHash,
+        'created_at'    => new UTCDateTime(),
+    ];
+    if ($ageGroup !== null) {
+        $player['profile'] = ['age_group' => $ageGroup, 'set_at' => new UTCDateTime()];
+    }
+    try {
+        $players->insertOne($player);
+    } catch (MongoDB\Driver\Exception\BulkWriteException $e) {
+        throw new Exception('Username already taken');
+    }
+    return $playerID;
+}
+
+function setPlayerAgeGroup(string $playerID, string $ageGroup): void {
+    getDb()->players->updateOne(
+        ['playerID' => $playerID],
+        ['$set' => ['profile' => ['age_group' => $ageGroup, 'set_at' => new UTCDateTime()]]]
+    );
+}
+
+function markRoomDone(string $sessionID, int $room): void {
+    getDb()->game_sessions->updateOne(
+        ['sessionID' => $sessionID],
+        ['$addToSet' => ['rooms_done' => $room]]
+    );
+}
+
+function playerHasSessions(string $playerID): bool {
+    return getDb()->game_sessions->findOne(['playerID' => $playerID]) !== null;
+}
+
+function getResumeInfo(string $playerID): ?array {
+    $s = getLatestSession($playerID);   // the newest game of any kind
+    if (!$s || ($s['completed_at'] ?? null) !== null) {
+        return null;                    // the newest game is finished, so start fresh
+    }
+    $choices = $s['choices'] ?? [];
+    return [
+        'sessionID'     => $s['sessionID'],
+        'current_scene' => $s['current_scene'] ?? null,
+        'rooms_done'    => array_map('intval', $s['rooms_done'] ?? []),
+        'choice_ids'    => array_column($choices, 'choiceID'),
+        'choices_made'  => count($choices),
+    ];
+}
+
+/** Every finished game with the age group of its player (null when the player skipped it). */
+function getCompletedSessionsWithAge(): array {
+    $cursor = getDb()->game_sessions->aggregate([
+        ['$match'   => ['completed_at' => ['$ne' => null]]],
+        ['$lookup'  => ['from' => 'players', 'localField' => 'playerID', 'foreignField' => 'playerID', 'as' => 'p']],
+        ['$project' => ['choices' => 1, 'age_group' => ['$arrayElemAt' => ['$p.profile.age_group', 0]]]],
+    ], TYPE_MAP);
+    return $cursor->toArray();
+}
+
+/** The player's newest game when it is finished (for "View my last report"), or null. */
+function getFinishedInfo(string $playerID): ?array {
+    $s = getLatestSession($playerID);
+    if (!$s || ($s['completed_at'] ?? null) === null) {
+        return null;
+    }
+    return ['sessionID' => $s['sessionID'], 'choices_made' => count($s['choices'] ?? [])];
 }

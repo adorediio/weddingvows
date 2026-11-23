@@ -1,0 +1,208 @@
+{
+  "room": 1,
+  "title": "Happy Family",
+  "maxTension": 3,
+  "start": "r1_s1",
+  "scenes": {
+    "r1_s1": {
+      "text": "Sunday morning. The pancakes are a little burnt, the kids are laughing, and he is humming off-key. It feels easy.",
+      "choices": [
+        {
+          "id": "r1_01",
+          "label": "Soak it in",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_s2a"
+        },
+        {
+          "id": "r1_02",
+          "label": "Notice the unopened bills by the door",
+          "reason": "Financial Problems",
+          "weight": 1,
+          "tension": 0,
+          "next": "r1_s2b"
+        }
+      ]
+    },
+    "r1_s2a": {
+      "text": "He pulls you into a hug and the kids pile on. Later, almost in passing, he says work has been slow.",
+      "choices": [
+        {
+          "id": "r1_03",
+          "label": "Ask how he really feels",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_s3a"
+        },
+        {
+          "id": "r1_04",
+          "label": "Let it go. It’s Sunday.",
+          "reason": "Financial Problems",
+          "weight": 1,
+          "tension": 0,
+          "next": "r1_s3b"
+        }
+      ]
+    },
+    "r1_s2b": {
+      "text": "You open one envelope. The number is bigger than you expected, and he sees your face.",
+      "choices": [
+        {
+          "id": "r1_05",
+          "label": "Show him",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_s3a"
+        },
+        {
+          "id": "r1_06",
+          "label": "Hide it for now",
+          "reason": "Financial Problems",
+          "weight": 1,
+          "tension": 0,
+          "next": "r1_s3b"
+        }
+      ]
+    },
+    "r1_s3a": {
+      "text": "He tells you the slow months have really been three months. He says it like a confession, then waits to see how you will take it.",
+      "choices": [
+        {
+          "id": "r1_07",
+          "label": "“We’ll manage it together.”",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_s4a"
+        },
+        {
+          "id": "r1_08",
+          "label": "“Why didn’t you tell me sooner?”",
+          "reason": null,
+          "weight": 0,
+          "tension": 1,
+          "next": "r1_s4b"
+        }
+      ]
+    },
+    "r1_s3b": {
+      "text": "That evening his mother calls during dinner. “Are you two managing?” she asks him, not you. He answers for both of you.",
+      "choices": [
+        {
+          "id": "r1_09",
+          "label": "Take the phone and speak for yourself",
+          "reason": "Personality Differences",
+          "weight": 1,
+          "tension": 1,
+          "next": "r1_s4b"
+        },
+        {
+          "id": "r1_10",
+          "label": "Let him handle it",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_s4c"
+        }
+      ]
+    },
+    "r1_s4a": {
+      "text": "His shoulders drop. The kids have drawn on the fridge door again, and for a moment you both laugh at nothing.",
+      "choices": [
+        {
+          "id": "r1_11",
+          "label": "Sit down tonight and make a plan",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_open"
+        },
+        {
+          "id": "r1_12",
+          "label": "Say it can wait until the weekend",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_quiet"
+        }
+      ]
+    },
+    "r1_s4b": {
+      "text": "“I was handling it,” he says. The word hangs in the air between you.",
+      "choices": [
+        {
+          "id": "r1_13",
+          "label": "“Partners don’t handle each other.”",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_open"
+        },
+        {
+          "id": "r1_14",
+          "label": "Drop it. Not today.",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_quiet"
+        },
+        {
+          "id": "r1_15",
+          "label": "“Handling it? With what money?”",
+          "reason": "Financial Problems",
+          "weight": 1,
+          "tension": 2,
+          "next": "r1_end_strain"
+        }
+      ]
+    },
+    "r1_s4c": {
+      "text": "Rain starts against the window. He ends the call and says nothing about what his mother said.",
+      "choices": [
+        {
+          "id": "r1_16",
+          "label": "Ask what she said",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_open"
+        },
+        {
+          "id": "r1_17",
+          "label": "Turn the television up",
+          "reason": null,
+          "weight": 0,
+          "tension": 0,
+          "next": "r1_end_quiet"
+        }
+      ]
+    },
+    "r1_end_open": {
+      "text": "You go through it together at the kitchen table. It isn’t fun, but neither of you is facing it alone.",
+      "choices": [],
+      "ending": {
+        "title": "Talking it out",
+        "tone": "hopeful"
+      }
+    },
+    "r1_end_quiet": {
+      "text": "The day stays warm. The envelope stays closed. Something small has been put away for later.",
+      "choices": [],
+      "ending": {
+        "title": "The quiet",
+        "tone": "uneasy"
+      }
+    },
+    "r1_end_strain": {
+      "text": "You go to bed with the dishes half done and your backs to each other. It is a small thing, the first of its kind, and you both notice.",
+      "choices": [],
+      "ending": {
+        "title": "The first night angry",
+        "tone": "uneasy"
+      }
+    }
+  }
+}

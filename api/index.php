@@ -71,6 +71,7 @@ function fullOutcome(array $session): array {
 }
 
 function accountPayload(array $player): array {
+    mongo();
     $playerID = $player['playerID'];
     $saves = listPlayerSaves($playerID);
     return [
@@ -245,6 +246,19 @@ try {
         send(200, ['logged_out' => true]);
     }
 
+        // POST /auth/delete-account   (deletes the logged-in player)
+    if ($method === 'POST' && $parts === ['auth', 'delete-account']) {
+        $playerID = requireLogin();
+        mongo();
+        foreach (getSessionsByPlayer($playerID) as $s) {
+            deleteSession($s['sessionID']);
+        }
+        deletePlayer($playerID);
+        $_SESSION = [];
+        session_destroy();
+        send(200, ['deleted' => true]);
+    }
+
     // POST /auth/profile   body: {"age_group": "30-34"}
     if ($method === 'POST' && $parts === ['auth', 'profile']) {
         $playerID = requireLogin();
@@ -391,7 +405,7 @@ try {
 
     // POST /sessions/{sessionID}/delete  -> delete a save file
     if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'delete') {
-        //mongo();
+        mongo();
         ownSessionOrFail($parts[1]);
         deleteSession($parts[1]);
         send(200, ['deleted' => true]);

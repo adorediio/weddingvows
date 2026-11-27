@@ -76,7 +76,7 @@ function nextAvailableSlot(string $playerID): int {
 }
 
 function startSession(string $playerID, string $firstScene = 'scene_01', ?int $slot = null): string {
-    if (!getDb()->players->findOne(['playerID' => $playerID])) {
+        if (!getPlayer($playerID)) {
         throw new Exception('Player not found');
     }
 
@@ -186,7 +186,10 @@ function completeSession(string $sessionID): bool {
     return $result->getModifiedCount() === 1;
 }
 
-
+function deleteSession(string $sessionID): bool {
+    $result = getDb()->game_sessions->deleteOne(['sessionID' => $sessionID]);
+    return $result->getDeletedCount() === 1;
+}
 // ------------------------------------------------------------------
 // Fully qualified class names are used, so no extra "use" lines needed.
 // ------------------------------------------------------------------
@@ -208,16 +211,6 @@ function formatDates($data) {
         return array_map('formatDates', $data);
     }
     return $data;
-}
-
-/** Find one player by playerID. Returns null if not found. */
-function getPlayer(string $playerID): ?array {
-    return getDb()->players->findOne(['playerID' => $playerID], TYPE_MAP);
-}
-
-/** Find one player by username (for login / resume). Returns null if not found. */
-function getPlayerByUsername(string $username): ?array {
-    return getDb()->players->findOne(['username' => $username], TYPE_MAP);
 }
 
 /** All games / save files a player has played, most recently updated first. */
@@ -306,35 +299,6 @@ function getCommunityPulse(): array {
 // ------------------------------------------------------------------
 // Accounts, login, 5-slot checkpoint saves, and "Continue"
 // ------------------------------------------------------------------
-function createAccount(string $username, string $passwordHash, ?string $ageGroup = null): string {
-    $players = getDb()->players;
-    $players->createIndex(['username' => 1], ['unique' => true]);
-
-    $playerID = 'p' . uniqid();
-    $player = [
-        'playerID'      => $playerID,
-        'username'      => $username,
-        'password_hash' => $passwordHash,
-        'created_at'    => new UTCDateTime(),
-    ];
-    if ($ageGroup !== null) {
-        $player['profile'] = ['age_group' => $ageGroup, 'set_at' => new UTCDateTime()];
-    }
-    try {
-        $players->insertOne($player);
-    } catch (MongoDB\Driver\Exception\BulkWriteException $e) {
-        throw new Exception('Username already taken');
-    }
-    return $playerID;
-}
-
-function setPlayerAgeGroup(string $playerID, string $ageGroup): void {
-    getDb()->players->updateOne(
-        ['playerID' => $playerID],
-        ['$set' => ['profile' => ['age_group' => $ageGroup, 'set_at' => new UTCDateTime()]]]
-    );
-}
-
 function markRoomDone(string $sessionID, int $room): void {
     getDb()->game_sessions->updateOne(
         ['sessionID' => $sessionID],
@@ -522,12 +486,24 @@ function listPlayerSaves(string $playerID): array {
 
 /** Every finished game with the age group of its player (null when the player skipped it). */
 function getCompletedSessionsWithAge(): array {
-    $cursor = getDb()->game_sessions->aggregate([
-        ['$match'   => ['completed_at' => ['$ne' => null]]],
-        ['$lookup'  => ['from' => 'players', 'localField' => 'playerID', 'foreignField' => 'playerID', 'as' => 'p']],
-        ['$project' => ['choices' => 1, 'age_group' => ['$arrayElemAt' => ['$p.profile.age_group', 0]]]],
-    ], TYPE_MAP);
-    return $cursor->toArray();
+    $sessions = getDb()->game_sessions->find(
+        ['completed_at' => ['$ne' => null]],
+        array_merge(TYPE_MAP, ['projection' => ['choices' => 1, 'playerID' => 1]])
+    )->toArray();
+    if (!$sessions) {
+        return [];
+    }
+
+    $ids = array_values(array_unique(array_column($sessions, 'playerID')));
+    $marks = implode(',', array_fill(0, count($ids), '?'));
+    $st = getPdo()->prepare("SELECT playerID, age_group FROM Players WHERE playerID IN ($marks)");
+    $st->execute($ids);
+    $ages = $st->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    foreach ($sessions as $i => $s) {
+        $sessions[$i]['age_group'] = $ages[$s['playerID']] ?? null;
+    }
+    return $sessions;
 }
 
 /** The player's newest game when it is finished (for "View my last report"), or null. */

@@ -319,16 +319,8 @@ function hubSqlFacts(?int $year = null): array {
     ];
 }
 
-function deleteSession(string $sessionID): bool
+function deletePlayer(string $playerID): bool
 {
-    global $pdo;
-
-    $stmt = $pdo->prepare("
-        DELETE FROM sessions
-        WHERE sessionID = :sessionID
-    ");
-
-    return $stmt->execute([
-        ':sessionID' => $sessionID
-    ]);
+    $stmt = getPdo()->prepare("DELETE FROM Players WHERE playerID = :playerID");
+    return $stmt->execute([':playerID' => $playerID]);
 }

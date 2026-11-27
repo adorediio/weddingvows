@@ -114,10 +114,10 @@ try {
         )
     ");
     
-    echo "Tables created successfully.";
 
 } catch (PDOException $e) {
-    echo "Database Error: " . $e->getMessage();
+    error_log($e->getMessage());
+    throw $e;
 }
 
 ?>

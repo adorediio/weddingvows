@@ -103,6 +103,17 @@ try {
         )
     ");
 
+    // Create Players table
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS Players (
+            playerID VARCHAR(50) PRIMARY KEY,
+            username VARCHAR(50) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL,
+            age_group VARCHAR(50) DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+    
     echo "Tables created successfully.";
 
 } catch (PDOException $e) {

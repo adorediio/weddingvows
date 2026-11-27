@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../mysql/queries.php';
+require_once __DIR__ . '/../mysql/auth.php';
 require_once __DIR__ . '/choices.php';
 require_once __DIR__ . '/outcome.php';
 require_once __DIR__ . '/profile.php';
@@ -65,7 +66,7 @@ function ownSessionOrFail(string $sessionID): array {
 function fullOutcome(array $session): array {
     $outcome = buildOutcome($session['choices'] ?? []);
     $player = getPlayer($session['playerID']);
-    $outcome['age_comparison'] = buildAgeComparison($player['profile']['age_group'] ?? null);
+    $outcome['age_comparison'] = buildAgeComparison($player['age_group'] ?? null);
     return $outcome;
 }
 
@@ -74,7 +75,7 @@ function accountPayload(array $player): array {
     $saves = listPlayerSaves($playerID);
     return [
         'username'   => $player['username'],
-        'age_group'  => $player['profile']['age_group'] ?? null,
+        'age_group'  => $player['age_group'] ?? null,
         'new_player' => count($saves) === 0,
         'resume'     => getResumeInfo($playerID),
         'finished'   => getFinishedInfo($playerID),
@@ -188,7 +189,7 @@ try {
 
     // POST /auth/signup
     if ($method === 'POST' && $parts === ['auth', 'signup']) {
-        mongo();
+        
         $d = body();
         need($d, ['username', 'password']);
         $username = strtolower(trim((string) $d['username']));
@@ -211,7 +212,7 @@ try {
 
     // POST /auth/login
     if ($method === 'POST' && $parts === ['auth', 'login']) {
-        mongo();
+        //mongo();
         $d = body();
         need($d, ['username', 'password']);
         $player = getPlayerByUsername(strtolower(trim((string) $d['username'])));
@@ -228,7 +229,7 @@ try {
     // GET /auth/me
     if ($method === 'GET' && $parts === ['auth', 'me']) {
         $playerID = requireLogin();
-        mongo();
+        //mongo();
         $player = getPlayer($playerID);
         if (!$player) {
             session_destroy();
@@ -390,7 +391,7 @@ try {
 
     // POST /sessions/{sessionID}/delete  -> delete a save file
     if ($method === 'POST' && count($parts) === 3 && $parts[0] === 'sessions' && $parts[2] === 'delete') {
-        mongo();
+        //mongo();
         ownSessionOrFail($parts[1]);
         deleteSession($parts[1]);
         send(200, ['deleted' => true]);

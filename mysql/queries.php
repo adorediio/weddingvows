@@ -318,3 +318,17 @@ function hubSqlFacts(?int $year = null): array {
         ] : null,
     ];
 }
+
+function deleteSession(string $sessionID): bool
+{
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        DELETE FROM sessions
+        WHERE sessionID = :sessionID
+    ");
+
+    return $stmt->execute([
+        ':sessionID' => $sessionID
+    ]);
+}

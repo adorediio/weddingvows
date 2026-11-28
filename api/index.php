@@ -491,6 +491,21 @@ try {
         }
     }
 
+    // GET /rooms/{n}  -> the story of one room, same JSON shape as the old rooms/room{n}.json
+    if ($method === 'GET' && count($parts) === 2 && $parts[0] === 'rooms') {
+        if (!ctype_digit($parts[1])) {
+            send(400, ['error' => 'Unknown room']);
+        }
+        $room = getRoom((int) $parts[1]);
+        if ($room === null) {
+            send(404, ['error' => 'Room not found']);
+        }
+        // Sent compact (not pretty-printed): the story is read by the game, not by people.
+        http_response_code(200);
+        echo json_encode($room, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+        exit;
+    }
+
     // No route match
     send(404, ['error' => 'Route not found']);
 

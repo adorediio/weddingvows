@@ -1,6 +1,6 @@
 // =====================================================
 //  GAME
-//  Content warning, room stories (rooms/room{n}.json), API calls,
+//  Content warning, room stories (GET /rooms/{n}, stored in MongoDB), API calls,
 //  tension effects, multi-slot save/load, support screen and the
 //  final statistics dashboard.
 //
@@ -122,9 +122,8 @@
 
     async function loadRoom(id) {
         if (roomCache[id]) return roomCache[id];
-        const res = await fetch('rooms/room' + id + '.json');
-        if (!res.ok) throw new Error('Could not load rooms/room' + id + '.json');
-        roomCache[id] = await res.json();
+        // Room stories now come from MongoDB through the API (GET /rooms/{n}).
+        roomCache[id] = await api('GET', '/rooms/' + id);
         return roomCache[id];
     }
 
@@ -432,7 +431,7 @@
         game.saveName = null;
         addUserBar();
 
-        if (replayMode && replayMode !== 'on' && replayMode !== 'off') {
+        if (typeof replayMode === 'string' && replayMode !== 'on' && replayMode !== 'off') {
             // Loaded a specific save file from mid-game
             api('GET', '/sessions/' + encodeURIComponent(replayMode))
                 .then(function (data) {

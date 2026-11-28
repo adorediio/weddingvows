@@ -1,7 +1,9 @@
 <?php
-// Choice rules are built from the room files in /rooms (room1.json ... room4.json),
-// so the story and the scoring can never drift apart.
+// Choice rules are built from the room documents in the MongoDB `rooms` collection
+// (see mongodb/rooms.php), so the story and the scoring can never drift apart.
 // Each rule: choiceID => [reason, weight, next, scene, room, room_done]
+
+require_once __DIR__ . '/../mongodb/rooms.php';
 
 function loadChoiceRules(): array {
     static $rules = null;
@@ -10,17 +12,12 @@ function loadChoiceRules(): array {
     }
 
     $rules = [];
-    $files = glob(__DIR__ . '/../rooms/room*.json') ?: [];
-    if (!$files) {
-        throw new RuntimeException('No room files found in /rooms');
+    $allRooms = getAllRooms();
+    if (!$allRooms) {
+        throw new RuntimeException('No rooms found. Run: php mongodb/seed_rooms.php');
     }
 
-    foreach ($files as $file) {
-        $room = json_decode(file_get_contents($file), true);
-        if (!is_array($room) || !isset($room['scenes'], $room['room'])) {
-            throw new RuntimeException('Bad room file: ' . basename($file));
-        }
-
+    foreach ($allRooms as $room) {
         foreach ($room['scenes'] as $sceneID => $scene) {
             foreach ($scene['choices'] as $choice) {
                 $id = $choice['id'];

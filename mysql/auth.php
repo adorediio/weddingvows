@@ -104,3 +104,23 @@ function setPlayerAgeGroup(string $playerID, string $ageGroup): bool
         ':playerID' => $playerID
     ]);
 }
+
+function updatePlayerProfile(string $playerID, string $username, ?string $ageGroup, ?string $passwordHash = null): void
+{
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        UPDATE Players
+        SET username = :username,
+            age_group = :age_group,
+            password_hash = COALESCE(:password_hash, password_hash)
+        WHERE playerID = :playerID
+    ");
+
+    $stmt->execute([
+        ':username'      => $username,
+        ':age_group'     => $ageGroup,
+        ':password_hash' => $passwordHash,
+        ':playerID'      => $playerID
+    ]);
+}

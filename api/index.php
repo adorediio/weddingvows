@@ -272,6 +272,52 @@ try {
         send(200, ['saved' => true]);
     }
 
+        // POST /auth/update-profile
+    // body: {"username": "...", "age_group": "30-34", "current_password": "...", "new_password": "..."}
+    if ($method === 'POST' && $parts === ['auth', 'update-profile']) {
+        $playerID = requireLogin();
+        $d = body();
+        need($d, ['username']);
+
+        $username = strtolower(trim((string) $d['username']));
+        if (!preg_match('/^[a-z0-9_]{3,20}$/', $username)) {
+            send(400, ['error' => 'Username must be 3 to 20 letters, numbers or underscores']);
+        }
+
+        $ageGroup = $d['age_group'] ?? null;
+        if ($ageGroup === '') {
+            $ageGroup = null;
+        }
+        if ($ageGroup !== null && !in_array($ageGroup, knownAgeGroups(), true)) {
+            send(400, ['error' => 'Unknown age_group']);
+        }
+
+        // Password only changes when a new one is typed, and the current one must match.
+        $newHash = null;
+        $newPassword = (string) ($d['new_password'] ?? '');
+        if ($newPassword !== '') {
+            if (strlen($newPassword) < 6 || strlen($newPassword) > 72) {
+                send(400, ['error' => 'New password must be 6 to 72 characters']);
+            }
+            $player = getPlayer($playerID);
+            if (!$player || !password_verify((string) ($d['current_password'] ?? ''), $player['password_hash'])) {
+                usleep(400000);
+                send(403, ['error' => 'Current password is wrong']);
+            }
+            $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        }
+
+        try {
+            updatePlayerProfile($playerID, $username, $ageGroup, $newHash);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                send(409, ['error' => 'That username is already taken']);
+            }
+            throw $e;
+        }
+        send(200, accountPayload(getPlayer($playerID)));
+    }
+
     // POST /game/new
     if ($method === 'POST' && $parts === ['game', 'new']) {
         $playerID = requireLogin();

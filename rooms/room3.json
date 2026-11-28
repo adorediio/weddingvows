@@ -6,297 +6,228 @@
   "scenes": {
     "r3_s1": {
       "text": "You come home late to find him at the kitchen table with your phone in his hand. The house is very quiet. “Who is this?” On the screen are messages you never meant him to read.",
+      "textIf": [
+        {"if": {"flag": "checks_in"}, "add": "It is not the first time he has gone through it."},
+        {"if": {"flag": "replied"}, "add": "The name at the top of the screen is the one from the wedding. So is the word you sent back."},
+        {"if": {"flag": "kept_secret"}, "add": "The thread you thought you had deleted is still there. Of course it is."},
+        {"if": {"flag": "confessed"}, "add": "You told him about this person once. You said it was nothing, and he believed you."},
+        {"if": {"flag": "drinking", "not": "in_recovery"}, "add": "There is a glass by his elbow. You don’t know how many came before it."},
+        {"if": {"flag": "spoke_up"}, "add": "Once, you told him the questions bothered you. He stopped asking. Maybe this is what he did instead."},
+        {"if": {"flag": "covered_drinking"}, "add": "You have made excuses for him so many times. Tonight, for once, he is the one asking you to explain."}
+      ],
       "choices": [
-        {
-          "id": "r3_01",
-          "label": "Tell him the truth",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_s2a"
-        },
-        {
-          "id": "r3_02",
-          "label": "“They’re just friends.”",
-          "reason": "Adultery & Infidelity",
-          "weight": 2,
-          "tension": 1,
-          "next": "r3_s2b"
-        },
-        {
-          "id": "r3_03",
-          "label": "Snatch the phone back",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 2,
-          "next": "r3_s2c"
-        }
+        {"id": "r3_01", "recap": "told him the truth", "label": "Tell him the truth", "reason": null, "weight": 0, "tension": 0, "next": "r3_s2a"},
+        {"id": "r3_02", "recap": "said they were just friends", "label": "“They’re just friends.”", "reason": "Adultery & Infidelity", "weight": 2, "tension": 1, "next": "r3_s2b"},
+        {"id": "r3_03", "recap": "snatched the phone back", "label": "Snatch the phone back", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 2, "next": "r3_s2c"},
+        {"id": "r3_48", "recap": "handed over their messages unasked", "label": "Hand over the rest of your messages before he asks", "requires": {"flag": "excused"}, "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "sets": ["controlling"], "next": "r3_s4c"}
       ]
     },
     "r3_s2a": {
       "text": "He is quiet. His jaw tightens, but he stays seated. The clock over the stove is suddenly very loud.",
       "choices": [
-        {
-          "id": "r3_04",
-          "label": "Explain without defending yourself",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_s3a"
-        },
-        {
-          "id": "r3_05",
-          "label": "Ask what he might be hiding too",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r3_s3b"
-        }
+        {"id": "r3_04", "recap": "explained without defending themselves", "label": "Explain without defending yourself", "reason": null, "weight": 0, "tension": 0, "next": "r3_s3a"},
+        {"id": "r3_05", "recap": "asked what he might be hiding too", "label": "Ask what he might be hiding too", "reason": null, "weight": 0, "tension": 1, "next": "r3_s3b"},
+        {"id": "r3_45", "recap": "waited for him to speak first", "label": "Wait for him to speak first", "reason": null, "weight": 0, "tension": 0, "next": "r3_g1"}
       ]
     },
     "r3_s2b": {
       "text": "He scrolls. “Friends don’t write this.” His voice is rising, and he is reading lines aloud now, one at a time.",
       "choices": [
-        {
-          "id": "r3_06",
-          "label": "Admit it",
-          "reason": "Adultery & Infidelity",
-          "weight": 1,
-          "tension": 0,
-          "next": "r3_s3a"
-        },
-        {
-          "id": "r3_07",
-          "label": "Insist he is overreacting",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 2,
-          "next": "r3_s3c"
-        }
+        {"id": "r3_06", "recap": "admitted it", "label": "Admit it", "reason": "Adultery & Infidelity", "weight": 1, "tension": 0, "next": "r3_s3a"},
+        {"id": "r3_07", "recap": "insisted he was overreacting", "label": "Insist he is overreacting", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 2, "next": "r3_s3c"}
       ]
     },
     "r3_s2c": {
       "text": "The phone hits the floor and the screen cracks. Neither of you moves. A thin line runs straight through the photo of the two of you.",
       "choices": [
-        {
-          "id": "r3_08",
-          "label": "Apologise",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_s3a"
-        },
-        {
-          "id": "r3_09",
-          "label": "“Look what you made me do.”",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 2,
-          "next": "r3_s3c"
-        }
+        {"id": "r3_08", "recap": "apologised", "label": "Apologise", "reason": null, "weight": 0, "tension": 0, "next": "r3_s3a"},
+        {"id": "r3_09", "recap": "said “Look what you made me do”", "label": "“Look what you made me do.”", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 2, "next": "r3_s3c", "sets": ["said_made_me"]}
       ]
     },
     "r3_s3a": {
       "text": "He asks to hear it all, from the beginning. Each answer you give lands like a coin dropped into a deep well. You wait for the sound of it hitting the bottom.",
       "choices": [
-        {
-          "id": "r3_10",
-          "label": "Tell him everything",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_s4a"
-        },
-        {
-          "id": "r3_11",
-          "label": "Tell him only some of it",
-          "reason": "Adultery & Infidelity",
-          "weight": 1,
-          "tension": 1,
-          "next": "r3_s4b"
-        }
+        {"id": "r3_10", "recap": "told him everything", "label": "Tell him everything", "reason": null, "weight": 0, "tension": 0, "next": "r3_s4a"},
+        {"id": "r3_11", "recap": "told him only some of it", "label": "Tell him only some of it", "reason": "Adultery & Infidelity", "weight": 1, "tension": 1, "next": "r3_s4b"}
       ]
     },
     "r3_s3b": {
       "text": "He laughs once, short and flat. “Hiding? I am here every night. At this table.”",
       "choices": [
-        {
-          "id": "r3_12",
-          "label": "Back down and apologise",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_s4a"
-        },
-        {
-          "id": "r3_13",
-          "label": "Press him about last Thursday",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 1,
-          "next": "r3_s4c"
-        }
+        {"id": "r3_12", "recap": "backed down and apologised", "label": "Back down and apologise", "reason": null, "weight": 0, "tension": 0, "next": "r3_s4a"},
+        {"id": "r3_13", "recap": "pressed him about last Thursday", "label": "Press him about last Thursday", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "next": "r3_s4c"},
+        {"id": "r3_46", "recap": "let the silence do the talking", "label": "Let the silence do the talking", "reason": null, "weight": 0, "tension": 0, "next": "r3_g1"}
       ]
     },
     "r3_s3c": {
       "text": "He picks the phone up again and reads a line aloud in a mocking voice. Then another. The kitchen is too small for the volume.",
-      "sfx": [
-        "shouting"
-      ],
+      "sfx": ["shouting"],
       "choices": [
-        {
-          "id": "r3_14",
-          "label": "Tell him to stop",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r3_s4c"
-        },
-        {
-          "id": "r3_15",
-          "label": "Walk out of the room",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_s4d"
-        },
-        {
-          "id": "r3_16",
-          "label": "Grab for the phone again",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 2,
-          "next": "r3_end_boil"
-        }
+        {"id": "r3_14", "recap": "told him to stop", "label": "Tell him to stop", "reason": null, "weight": 0, "tension": 1, "sets": ["told_stop"], "next": "r3_s4c", "route": [{"if": {"chance": 0.5}, "to": "r3_h1"}]},
+        {"id": "r3_15", "recap": "walked out of the room", "label": "Walk out of the room", "reason": null, "weight": 0, "tension": 0, "sets": ["walked_away"], "next": "r3_s4d", "route": [{"if": {"chance": 0.35}, "to": "r3_h1"}]},
+        {"id": "r3_16", "recap": "grabbed for the phone again", "label": "Grab for the phone again", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 2, "next": "r3_end_boil"},
+        {"id": "r3_26", "recap": "threatened to hit him", "label": "“Say that again and I’ll hit you.”", "reason": "Domestic Violence & Abuses", "weight": 2, "tension": 3, "sets": ["you_threatened"], "next": "r3_end_line", "jump": {"room": 4, "scene": "r4_s1b"}}
+      ]
+    },
+    "r3_h1": {
+      "text": "His chair scrapes back. Before you reach the door he is in front of it, closer than he needs to be. He keeps his voice low, which is worse than shouting. “Do that again,” he says, “and see what happens.”",
+      "textIf": [
+        {"if": {"flag": "checks_in"}, "add": "You think of all the times he asked where you were, and how lightly he used to ask it."}
+      ],
+      "impact": true,
+      "choices": [
+        {"id": "r3_49", "recap": "backed away toward the hallway", "label": "Back away toward the hallway", "reason": "Domestic Violence & Abuses", "weight": 2, "tension": 2, "sets": ["he_threatened"], "next": "r3_end_threat", "jump": {"room": 4, "scene": "r4_s1e"}},
+        {"id": "r3_50", "recap": "told him he was frightening them", "label": "“You’re frightening me.”", "reason": "Domestic Violence & Abuses", "weight": 2, "tension": 1, "sets": ["he_threatened"], "next": "r3_end_threat", "jump": {"room": 4, "scene": "r4_s1e"}},
+        {"id": "r3_51", "recap": "held their ground and stared back", "label": "Hold your ground and stare back", "reason": "Domestic Violence & Abuses", "weight": 2, "tension": 3, "sets": ["he_threatened"], "next": "r3_end_keys", "jump": {"room": 4, "scene": "r4_s1c"}}
       ]
     },
     "r3_s4a": {
       "text": "The silence afterwards is the longest one yet. Then: “I need to sleep in the other room tonight.”",
       "choices": [
-        {
-          "id": "r3_17",
-          "label": "Ask him to stay and keep talking",
-          "reason": null,
-          "weight": 0,
-          "tension": -1,
-          "next": "r3_end_talk"
-        },
-        {
-          "id": "r3_18",
-          "label": "Let him go",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_end_apart"
-        }
+        {"id": "r3_17", "recap": "asked him to stay and talk", "label": "Ask him to stay and keep talking", "reason": null, "weight": 0, "tension": -1, "next": "r3_end_talk"},
+        {"id": "r3_18", "recap": "let him go", "label": "Let him go", "reason": null, "weight": 0, "tension": 0, "next": "r3_end_apart"},
+        {"id": "r3_47", "recap": "noticed the coat and keys", "label": "Watch him pick up his coat and keys, not just a pillow", "reason": null, "weight": 0, "tension": 0, "next": "r3_g1"}
       ]
     },
     "r3_s4b": {
       "text": "He notices the gaps the way he notices a wobbling chair. “You’re leaving things out.”",
       "choices": [
-        {
-          "id": "r3_19",
-          "label": "Tell him the rest",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_s4a"
-        },
-        {
-          "id": "r3_20",
-          "label": "Say “That’s all there is.”",
-          "reason": "Adultery & Infidelity",
-          "weight": 1,
-          "tension": 1,
-          "next": "r3_s4c"
-        }
+        {"id": "r3_19", "recap": "told him the rest", "label": "Tell him the rest", "reason": null, "weight": 0, "tension": 0, "next": "r3_s4a"},
+        {"id": "r3_20", "recap": "said that was all there was", "label": "Say “That’s all there is.”", "reason": "Adultery & Infidelity", "weight": 1, "tension": 1, "next": "r3_s4c"}
       ]
     },
     "r3_s4c": {
       "text": "His palm comes down on the table. The cups jump. The sound fills the whole house, and you realise you have stopped breathing.",
-      "sfx": [
-        "shouting"
-      ],
+      "sfx": ["shouting"],
       "impact": true,
       "choices": [
-        {
-          "id": "r3_21",
-          "label": "Flinch and say nothing",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r3_s4d"
-        },
-        {
-          "id": "r3_22",
-          "label": "Raise your voice back",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 2,
-          "next": "r3_end_boil"
-        },
-        {
-          "id": "r3_23",
-          "label": "“I need you to lower your voice.”",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r3_end_standoff"
-        }
+        {"id": "r3_21", "recap": "flinched and said nothing", "label": "Flinch and say nothing", "reason": null, "weight": 0, "tension": 1, "next": "r3_s4d"},
+        {"id": "r3_22", "recap": "raised their voice back", "label": "Raise your voice back", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 2, "next": "r3_end_boil"},
+        {"id": "r3_23", "recap": "asked him to lower his voice", "label": "“I need you to lower your voice.”", "reason": null, "weight": 0, "tension": 1, "next": "r3_end_standoff"}
+      ],
+      "textIf": [
+        {"if": {"flag": "drinking", "not": "in_recovery"}, "add": "The glass by his elbow tips and rolls, and neither of you reaches for it."}
       ]
     },
     "r3_s4d": {
       "text": "Down the hall, a small door opens an inch. One of the children is awake, and listening.",
       "choices": [
-        {
-          "id": "r3_24",
-          "label": "Go to the child and close the door gently",
-          "reason": null,
-          "weight": 0,
-          "tension": -1,
-          "next": "r3_end_apart"
-        },
-        {
-          "id": "r3_25",
-          "label": "Stay where you are and keep your voice low",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r3_end_standoff"
-        }
+        {"id": "r3_24", "recap": "went to the child and closed the door gently", "label": "Go to the child and close the door gently", "reason": null, "weight": 0, "tension": -1, "next": "r3_end_apart"},
+        {"id": "r3_25", "recap": "stayed and kept their voice low", "label": "Stay where you are and keep your voice low", "reason": null, "weight": 0, "tension": 0, "next": "r3_end_standoff"}
+      ]
+    },
+    "r3_g1": {
+      "text": "He doesn’t shout. He sets the phone down on the table, very gently, like something that might break. Then he stands, pushes in his chair, and goes upstairs. A minute later you hear a zip.",
+      "choices": [
+        {"id": "r3_27", "recap": "followed him upstairs", "label": "Follow him upstairs", "reason": null, "weight": 0, "tension": 1, "next": "r3_g2a"},
+        {"id": "r3_28", "recap": "stayed at the table", "label": "Stay at the table and give him room", "reason": "Desertion", "weight": 1, "tension": 0, "next": "r3_g2b"},
+        {"id": "r3_29", "recap": "called up the stairs to talk", "label": "Call up the stairs: “Please, let’s talk.”", "reason": null, "weight": 0, "tension": -1, "next": "r3_g2a"}
+      ]
+    },
+    "r3_g2a": {
+      "text": "He is folding shirts into a holdall, one at a time, with great care. “I’m not angry,” he says, without looking up. “That’s the part that frightens me.”",
+      "choices": [
+        {"id": "r3_30", "recap": "asked him to stay, for the children", "label": "Ask him to stay, for the children", "reason": null, "weight": 0, "tension": -1, "next": "r3_g3a"},
+        {"id": "r3_31", "recap": "asked where he was going", "label": "Ask where he is going", "reason": null, "weight": 0, "tension": 0, "next": "r3_g3b"},
+        {"id": "r3_32", "recap": "stepped aside from the doorway", "label": "Step aside from the doorway", "reason": "Desertion", "weight": 1, "tension": 0, "next": "r3_g3b"}
+      ]
+    },
+    "r3_g2b": {
+      "text": "His footsteps come down slowly. The holdall is on his shoulder. He stops at the front door, one hand on the latch. “I’ll be at my brother’s,” he says. He does not say for how long.",
+      "choices": [
+        {"id": "r3_33", "recap": "asked if he would call", "label": "“Will you call?”", "reason": null, "weight": 0, "tension": 0, "next": "r3_g3b"},
+        {"id": "r3_34", "recap": "said nothing and watched the door", "label": "Say nothing and watch the door", "reason": "Desertion", "weight": 2, "tension": 0, "next": "r3_g3c"}
+      ]
+    },
+    "r3_g3a": {
+      "text": "He sits on the edge of the bed, bag half zipped. “I’d stay if I thought it would be different,” he says. “I think I need to be somewhere quiet, just for a while, and work out what I actually want.”",
+      "choices": [
+        {"id": "r3_35", "recap": "asked for a week and a date to talk", "label": "Ask for one week, and a day to talk again", "reason": null, "weight": 0, "tension": -1, "next": "r3_end_week"},
+        {"id": "r3_36", "recap": "let him go", "label": "Let him go", "reason": "Desertion", "weight": 1, "tension": 0, "next": "r3_g4"}
+      ]
+    },
+    "r3_g3b": {
+      "text": "He leaves that night. The first week there are short messages: “Arrived.” “Kids okay?” By the second week the replies take a day, and by the third they are only one word.",
+      "choices": [
+        {"id": "r3_37", "recap": "wrote him one long, honest message", "label": "Write him one long, honest message", "reason": null, "weight": 0, "tension": 0, "next": "r3_end_message"},
+        {"id": "r3_38", "recap": "stopped messaging and waited for him to come back", "label": "Stop messaging and wait for him to come back", "reason": "Desertion", "weight": 1, "tension": 0, "next": "r3_g4"},
+        {"id": "r3_39", "recap": "told the children he was working away", "label": "Tell the children he is “working away”", "reason": "Desertion", "weight": 1, "tension": 0, "next": "r3_g4"}
+      ]
+    },
+    "r3_g3c": {
+      "text": "The door closes softly behind him. There is no slam. A car starts outside, idles for a moment, and pulls away. The house settles into a silence it has never had before.",
+      "choices": [
+        {"id": "r3_40", "recap": "went to the window", "label": "Go to the window", "reason": null, "weight": 0, "tension": 1, "next": "r3_g4"},
+        {"id": "r3_41", "recap": "sat in the dark", "label": "Sit in the dark until the sound is gone", "reason": "Desertion", "weight": 1, "tension": 0, "next": "r3_g4"}
+      ]
+    },
+    "r3_g4": {
+      "text": "Months pass. His things stay in the wardrobe. The children stop asking when he is coming home and start asking why he doesn’t call. You are still not sure whether this is a pause or an ending.",
+      "choices": [
+        {"id": "r3_42", "recap": "wrote that the children needed him", "label": "Write to him: “The children need to hear from you.”", "reason": null, "weight": 0, "tension": -1, "next": "r3_end_letter"},
+        {"id": "r3_43", "recap": "spoke to a solicitor", "label": "Speak to a solicitor about what happens next", "reason": "Desertion", "weight": 3, "tension": 0, "next": "r3_end_gone"},
+        {"id": "r3_44", "recap": "kept leaving the porch light on", "label": "Keep leaving the porch light on", "reason": "Desertion", "weight": 2, "tension": 0, "next": "r3_end_light"}
       ]
     },
     "r3_end_talk": {
       "text": "It goes on until three in the morning, with no shouting. Nothing is fixed, but both of you now know where things stand.",
       "choices": [],
-      "ending": {
-        "title": "A hard, honest night",
-        "tone": "hopeful"
-      }
+      "ending": {"title": "A hard, honest night", "tone": "hopeful"}
     },
     "r3_end_apart": {
       "text": "He takes a pillow down the hall. The door closes without a slam, which is its own kind of sound.",
       "choices": [],
-      "ending": {
-        "title": "The other room",
-        "tone": "uneasy"
-      }
+      "ending": {"title": "The other room", "tone": "uneasy"}
     },
     "r3_end_standoff": {
       "text": "You each retreat to your own side of the room. The phone sits face down between you, cracked.",
       "choices": [],
-      "ending": {
-        "title": "Standoff",
-        "tone": "uneasy"
-      }
+      "ending": {"title": "Standoff", "tone": "uneasy"}
     },
     "r3_end_boil": {
       "text": "He stands up too fast and the chair scrapes back. “We’re not done,” he says, and the room goes very still.",
       "choices": [],
-      "ending": {
-        "title": "Boiling point",
-        "tone": "dark"
-      }
+      "ending": {"title": "Boiling point", "tone": "dark", "jumpIf": [{"if": {"flag": "isolated"}, "room": 4, "scene": "r4_s1c"}]}
+    },
+    "r3_end_line": {
+      "text": "The sentence is out before you can stop it. He does not shout back. He goes very still, and something you have never seen settles in his face. Then the kitchen fills with noise.",
+      "choices": [],
+      "ending": {"title": "The line", "tone": "dark"}
+    },
+    "r3_end_threat": {
+      "text": "He steps aside at last, but only just enough. You have to brush past him to get out of the kitchen. Neither of you says anything. What he said is still in the room, and it follows you down the hall.",
+      "choices": [],
+      "ending": {"title": "A warning", "tone": "dark"}
+    },
+    "r3_end_keys": {
+      "text": "Neither of you looks away. Then he does, and somehow that is worse. He picks your keys up off the table, slips them into his pocket, and sits back down as if nothing has happened.",
+      "choices": [],
+      "ending": {"title": "Your keys", "tone": "dark"}
+    },
+    "r3_end_week": {
+      "text": "He nods, slowly. “A week,” he says. “Saturday. Here.” He leaves with the bag, but he also leaves a date. It is not a promise, but it is more than most people get.",
+      "choices": [],
+      "ending": {"title": "A date to talk", "tone": "hopeful"}
+    },
+    "r3_end_message": {
+      "text": "You write it three times and send the third. The little word “Read” appears under it within the minute. Nothing comes back. You are not sure which is harder: being ignored, or being understood and left anyway.",
+      "choices": [],
+      "ending": {"title": "Read, not answered", "tone": "uneasy"}
+    },
+    "r3_end_letter": {
+      "text": "Eleven days later an envelope arrives in his handwriting. Inside is a card for the children, and one line for you: “I’m sorry. I don’t know how to come back yet.” It is something. It is not enough.",
+      "choices": [],
+      "ending": {"title": "A reply", "tone": "uneasy"}
+    },
+    "r3_end_light": {
+      "text": "Every night you switch it on, and every morning you switch it off. You tell yourself it is for the children. A year from now you will realise it was a way of not deciding.",
+      "choices": [],
+      "ending": {"title": "The porch light", "tone": "uneasy"}
+    },
+    "r3_end_gone": {
+      "text": "The solicitor asks how long he has been away, and you have to count. Then she asks whether he has contacted you, and you have to say no. The word she uses is a plain one. It is also, you realise, accurate.",
+      "choices": [],
+      "ending": {"title": "Gone", "tone": "dark"}
     }
   }
 }

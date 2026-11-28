@@ -30,7 +30,8 @@ function ladderRungs(): array {
             'title'   => 'Slammed doors and intimidation',
             'blurb'   => 'A door slammed, a palm on the table, a mug put down hard. Nobody is touched, but everybody feels it.',
             'reason'  => 'Unreasonable Behaviour',
-            'scenes'  => ['r3_s4c', 'r4_s3a', 'r4_s3b'],
+            //'scenes'  => ['r3_s4c', 'r4_s3a', 'r4_s3b'],
+            'scenes'  => ['r3_s4c', 'r4_s3a', 'r4_s3b', 'r3_end_line', 'r1_c4c', 'r1_c5b'],
             'choices' => [],
         ],
         [

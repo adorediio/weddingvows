@@ -6,312 +6,287 @@
   "scenes": {
     "r2_s1": {
       "text": "A friend’s wedding reception. Across the room he is laughing with someone you don’t know, standing a little too close. Your phone lights up in your hand: a message from an old colleague.",
-      "sfx": [
-        "phone_buzz"
-      ],
+      "sfx": ["phone_buzz"],
       "choices": [
-        {
-          "id": "r2_01",
-          "label": "Walk over and join them",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s2a"
-        },
-        {
-          "id": "r2_02",
-          "label": "Stay put and read the message",
-          "reason": "Adultery & Infidelity",
-          "weight": 2,
-          "tension": 1,
-          "next": "r2_s2b"
-        },
-        {
-          "id": "r2_03",
-          "label": "Step outside for some air",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s2c"
-        }
+        {"id": "r2_01", "recap": "walked over and joined them", "label": "Walk over and join them", "reason": null, "weight": 0, "tension": 0, "next": "r2_s2a"},
+        {"id": "r2_02", "recap": "stayed put and read the message", "label": "Stay put and read the message", "reason": "Adultery & Infidelity", "weight": 2, "tension": 1, "next": "r2_s2b", "sets": ["read_message"]},
+        {"id": "r2_03", "recap": "stepped outside for some air", "label": "Step outside for some air", "reason": null, "weight": 0, "tension": 0, "next": "r2_s2c"},
+        {"id": "r2_51", "recap": "noticed how many drinks he has had", "label": "Notice how many drinks he has had", "reason": "Addiction", "weight": 1, "tension": 1, "next": "r2_a1", "sets": ["drinking"]}
       ]
     },
     "r2_s2a": {
       "text": "Up close it is harmless. She is a cousin visiting from overseas, and he introduces you with his hand on your back. “He talks about you constantly,” she says. You feel a little foolish.",
       "choices": [
-        {
-          "id": "r2_04",
-          "label": "Laugh it off together",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s3a"
-        },
-        {
-          "id": "r2_05",
-          "label": "Keep wondering anyway",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r2_s3b"
-        }
+        {"id": "r2_04", "recap": "laughed it off together", "label": "Laugh it off together", "reason": null, "weight": 0, "tension": 0, "next": "r2_s3a"},
+        {"id": "r2_05", "recap": "kept wondering anyway", "label": "Keep wondering anyway", "reason": null, "weight": 0, "tension": 1, "next": "r2_s3b"}
       ]
     },
     "r2_s2b": {
       "text": "The message reads: “Still thinking about you. Dinner Thursday?” You look up. He is watching you read it.",
       "choices": [
-        {
-          "id": "r2_06",
-          "label": "Reply “Maybe”",
-          "reason": "Adultery & Infidelity",
-          "weight": 2,
-          "tension": 2,
-          "next": "r2_s3c"
-        },
-        {
-          "id": "r2_07",
-          "label": "Delete it and say nothing",
-          "reason": "Adultery & Infidelity",
-          "weight": 1,
-          "tension": 1,
-          "next": "r2_s3b"
-        },
-        {
-          "id": "r2_08",
-          "label": "Walk over and show him",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s3d"
-        }
+        {"id": "r2_06", "recap": "replied “Maybe”", "label": "Reply “Maybe”", "reason": "Adultery & Infidelity", "weight": 2, "tension": 2, "next": "r2_s3c", "sets": ["replied"]},
+        {"id": "r2_07", "recap": "deleted it and said nothing", "label": "Delete it and say nothing", "reason": "Adultery & Infidelity", "weight": 1, "tension": 1, "next": "r2_s3b", "sets": ["kept_secret"]},
+        {"id": "r2_08", "recap": "walked over and showed him", "label": "Walk over and show him", "reason": null, "weight": 0, "tension": 0, "next": "r2_s3d", "sets": ["confessed"]}
       ]
     },
     "r2_s2c": {
       "text": "In the corridor you realise you are checking whether he follows you. He doesn’t. Through the glass doors you can see him still talking, still laughing.",
       "choices": [
-        {
-          "id": "r2_09",
-          "label": "Go back and ask him directly",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s3a"
-        },
-        {
-          "id": "r2_10",
-          "label": "Stay out here and say nothing",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 1,
-          "next": "r2_s3b"
-        },
-        {
-          "id": "r2_11",
-          "label": "Call the colleague back",
-          "reason": "Adultery & Infidelity",
-          "weight": 2,
-          "tension": 2,
-          "next": "r2_s3c"
-        }
+        {"id": "r2_09", "recap": "went back and asked him directly", "label": "Go back and ask him directly", "reason": null, "weight": 0, "tension": 0, "next": "r2_s3a"},
+        {"id": "r2_10", "recap": "stayed outside and said nothing", "label": "Stay out here and say nothing", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "next": "r2_s3b"},
+        {"id": "r2_11", "recap": "called the colleague back", "label": "Call the colleague back", "reason": "Adultery & Infidelity", "weight": 2, "tension": 2, "next": "r2_s3c", "sets": ["read_message", "replied"]}
       ]
     },
     "r2_s3a": {
       "text": "The band starts a slow song. He holds out his hand, a little awkwardly, the way he did at your own wedding. For a minute it is only the two of you.",
       "choices": [
-        {
-          "id": "r2_12",
-          "label": "Dance with him",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s4a"
-        },
-        {
-          "id": "r2_13",
-          "label": "Tell him about the message first",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s3d"
-        }
+        {"id": "r2_12", "recap": "danced with him", "label": "Dance with him", "reason": null, "weight": 0, "tension": 0, "next": "r2_s4a"},
+        {"id": "r2_13", "recap": "showed him the message unopened", "label": "Hand him your phone before you even open the message", "reason": null, "weight": 0, "tension": 0, "next": "r2_s3d", "sets": ["confessed"]}
       ]
     },
     "r2_s3b": {
       "text": "The drive home is quiet. The radio fills the gaps with a song neither of you chose. He taps the wheel, then stops.",
       "choices": [
-        {
-          "id": "r2_14",
-          "label": "Ask about the woman at the reception",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r2_s4b"
-        },
-        {
-          "id": "r2_15",
-          "label": "Look out the window",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_end_doubt"
-        }
+        {"id": "r2_14", "recap": "asked about the woman", "label": "Ask about the woman at the reception", "reason": null, "weight": 0, "tension": 1, "next": "r2_s4b"},
+        {"id": "r2_15", "recap": "looked out the window", "label": "Look out the window", "reason": null, "weight": 0, "tension": 0, "next": "r2_end_doubt"},
+        {"id": "r2_27", "recap": "realised they had nothing to say", "label": "Realise you have nothing you want to say to him", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 0, "next": "r2_d1"}
       ]
     },
     "r2_s3c": {
       "text": "Whatever you said, or didn’t say, it is out in the world now. Your phone is warm in your hand. Across the room he catches your eye and smiles, and you lock the screen.",
       "choices": [
-        {
-          "id": "r2_16",
-          "label": "Put the phone away and go to him",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r2_s4c"
-        },
-        {
-          "id": "r2_17",
-          "label": "Delete the thread",
-          "reason": "Adultery & Infidelity",
-          "weight": 1,
-          "tension": 1,
-          "next": "r2_s4c"
-        },
-        {
-          "id": "r2_18",
-          "label": "Tell him now, before it grows",
-          "reason": null,
-          "weight": 0,
-          "tension": -1,
-          "next": "r2_s3d"
-        }
+        {"id": "r2_16", "recap": "went back to him", "label": "Put the phone away and go to him", "reason": null, "weight": 0, "tension": 1, "next": "r2_s4c"},
+        {"id": "r2_17", "recap": "deleted the thread", "label": "Delete the thread", "reason": "Adultery & Infidelity", "weight": 1, "tension": 1, "next": "r2_s4c", "sets": ["kept_secret"]},
+        {"id": "r2_18", "recap": "told him before it grew", "label": "Tell him now, before it grows", "reason": null, "weight": 0, "tension": -1, "next": "r2_s3d", "sets": ["confessed"]}
       ]
     },
     "r2_s3d": {
       "text": "He reads the message twice. “Who is this?” His voice is careful, not angry, which somehow makes it harder.",
       "choices": [
-        {
-          "id": "r2_19",
-          "label": "Tell him the truth: an old colleague, nothing more",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_s4a"
-        },
-        {
-          "id": "r2_20",
-          "label": "Say you don’t know why they wrote it",
-          "reason": "Adultery & Infidelity",
-          "weight": 1,
-          "tension": 1,
-          "next": "r2_s4b"
-        }
+        {"id": "r2_19", "recap": "told him the truth", "label": "Tell him the truth: an old colleague, nothing more", "reason": null, "weight": 0, "tension": 0, "next": "r2_s4a", "sets": ["confessed"]},
+        {"id": "r2_20", "recap": "said they didn’t know why it was sent", "label": "Say you don’t know why they wrote it", "reason": "Adultery & Infidelity", "weight": 1, "tension": 1, "next": "r2_s4b"}
+      ],
+      "textIf": [
+        {"if": {"not": "read_message"}, "add": "You read it over his shoulder at the same time he does."}
       ]
     },
     "r2_s4a": {
       "text": "The song ends. He keeps hold of your hand. “I got jealous tonight,” he says, quietly, as if it embarrasses him.",
       "choices": [
-        {
-          "id": "r2_21",
-          "label": "Admit you wondered about him too",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_end_trust"
-        },
-        {
-          "id": "r2_22",
-          "label": "Brush it off and change the subject",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r2_end_silence"
-        }
+        {"id": "r2_21", "recap": "admitted they had wondered too", "label": "Admit you wondered about him too", "reason": null, "weight": 0, "tension": 0, "next": "r2_end_trust"},
+        {"id": "r2_22", "recap": "brushed it off", "label": "Brush it off and change the subject", "reason": null, "weight": 0, "tension": 1, "next": "r2_end_silence"}
       ]
     },
     "r2_s4b": {
       "text": "He turns the radio off. “You’ve been quiet all evening.”",
       "choices": [
-        {
-          "id": "r2_23",
-          "label": "Tell him what you are really feeling",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r2_end_confession"
-        },
-        {
-          "id": "r2_24",
-          "label": "Say “I’m just tired.”",
-          "reason": "Unreasonable Behaviour",
-          "weight": 1,
-          "tension": 1,
-          "next": "r2_end_silence"
-        }
+        {"id": "r2_23", "recap": "told him what they were really feeling", "label": "Tell him what you are really feeling", "reason": null, "weight": 0, "tension": 0, "next": "r2_end_confession"},
+        {"id": "r2_24", "recap": "said they were just tired", "label": "Say “I’m just tired.”", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "next": "r2_end_silence"},
+        {"id": "r2_28", "recap": "said it had been months", "label": "“It’s not just tonight. It’s been months.”", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 1, "next": "r2_d2c"}
       ]
     },
     "r2_s4c": {
       "text": "In bed, your phone buzzes under the pillow. He lies very still, pretending to sleep.",
-      "sfx": [
-        "phone_buzz"
-      ],
+      "sfx": ["phone_buzz"],
       "choices": [
-        {
-          "id": "r2_25",
-          "label": "Read it in the bathroom",
-          "reason": "Adultery & Infidelity",
-          "weight": 2,
-          "tension": 2,
-          "next": "r2_end_secret"
-        },
-        {
-          "id": "r2_26",
-          "label": "Turn the phone off and face him",
-          "reason": null,
-          "weight": 0,
-          "tension": -1,
-          "next": "r2_end_confession"
-        }
+        {"id": "r2_25", "recap": "read it in the bathroom", "label": "Read it in the bathroom", "reason": "Adultery & Infidelity", "weight": 2, "tension": 2, "next": "r2_end_secret", "sets": ["kept_secret"]},
+        {"id": "r2_26", "recap": "turned the phone off and faced him", "label": "Turn the phone off and face him", "reason": null, "weight": 0, "tension": -1, "next": "r2_end_confession", "sets": ["confessed"]}
       ]
     },
     "r2_end_trust": {
       "text": "You ask, he answers, and the knot loosens. Asking out loud was the hard part.",
       "choices": [],
-      "ending": {
-        "title": "Clearing the air",
-        "tone": "hopeful"
-      }
+      "ending": {"title": "Clearing the air", "tone": "hopeful"}
     },
     "r2_end_doubt": {
       "text": "Nothing happened. But the question stays with you all night, and it has no one to answer it.",
       "choices": [],
-      "ending": {
-        "title": "A seed of doubt",
-        "tone": "uneasy"
-      }
+      "ending": {"title": "A seed of doubt", "tone": "uneasy"}
     },
     "r2_end_secret": {
       "text": "You read it under the bathroom light. It is only a few words. It is also the first thing you have kept from him.",
       "choices": [],
-      "ending": {
-        "title": "A secret begins",
-        "tone": "dark"
-      }
+      "ending": {"title": "A secret begins", "tone": "dark"}
     },
     "r2_end_silence": {
       "text": "On the ride home, and the night after, you look out of different windows. Neither of you says what you are thinking.",
       "choices": [],
-      "ending": {
-        "title": "Unsaid",
-        "tone": "uneasy"
-      }
+      "ending": {"title": "Unsaid", "tone": "uneasy"}
     },
     "r2_end_confession": {
       "text": "It is awkward and it costs something. But the thing you were both circling is finally on the table.",
       "choices": [],
-      "ending": {
-        "title": "Said out loud",
-        "tone": "uneasy"
-      }
+      "ending": {"title": "Said out loud", "tone": "uneasy"}
+    },
+    "r2_d1": {
+      "text": "Nothing happened tonight. That is what you cannot stop thinking about. Neither of you is angry. You are simply somewhere else. At home he asks if you want tea, and you say no before he has finished the sentence.",
+      "choices": [
+        {"id": "r2_29", "recap": "sat with him while the tea brewed", "label": "Say yes, and sit with him while it brews", "reason": null, "weight": 0, "tension": -1, "next": "r2_d2a"},
+        {"id": "r2_30", "recap": "went up to bed first", "label": "Say you are tired and go up first", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 0, "next": "r2_d2b"},
+        {"id": "r2_31", "recap": "asked when they last really talked", "label": "Ask: “When did we last talk about anything?”", "reason": null, "weight": 0, "tension": 1, "next": "r2_d2c"}
+      ]
+    },
+    "r2_d2a": {
+      "text": "You drink it in the kitchen. You talk about the wedding: the band, the speeches, the cake. It is the longest conversation in weeks, and neither of you mentions why it was so hard to start.",
+      "choices": [
+        {"id": "r2_32", "recap": "suggested a weekend away", "label": "Suggest a weekend away, just the two of you", "reason": null, "weight": 0, "tension": -1, "next": "r2_end_reconnect"},
+        {"id": "r2_33", "recap": "enjoyed it, and left it there", "label": "Enjoy it, and leave it there", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 0, "next": "r2_d3a"}
+      ]
+    },
+    "r2_d2b": {
+      "text": "Weeks pass in small subtractions. Dinner at different times. His shoes by the door and your coat in the hall, like two people who happen to share a key.",
+      "choices": [
+        {"id": "r2_34", "recap": "moved to the spare room", "label": "Move to the spare room “until your cough passes”", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 0, "next": "r2_d3b"},
+        {"id": "r2_35", "recap": "booked a counselling session and left the card on his plate", "label": "Book a counselling session and leave the card on his plate", "reason": null, "weight": 0, "tension": -1, "next": "r2_d3c"},
+        {"id": "r2_36", "recap": "said nothing", "label": "Say nothing. It is easier.", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 0, "next": "r2_d3a"}
+      ]
+    },
+    "r2_d2c": {
+      "text": "He doesn’t argue. He opens his mouth, and the honest answer sits there between you. “Since the recital?” he says at last. “No. Before that.” Neither of you can remember.",
+      "choices": [
+        {"id": "r2_37", "recap": "reached for his hand", "label": "Reach for his hand", "reason": null, "weight": 0, "tension": -1, "next": "r2_d3c"},
+        {"id": "r2_38", "recap": "said maybe that was the answer", "label": "“Maybe that is the answer.”", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 1, "next": "r2_d3b"}
+      ]
+    },
+    "r2_d3a": {
+      "text": "A year goes by. The house is calm, and the calm has a texture, like dust. You eat in front of screens. He has stopped asking about your day and you have stopped telling him.",
+      "choices": [
+        {"id": "r2_39", "recap": "planned a trip together", "label": "Plan a trip together, to see if you still can", "reason": null, "weight": 0, "tension": -1, "next": "r2_d4a"},
+        {"id": "r2_40", "recap": "took the job in another city", "label": "Take the job in the other city. “Just for a while.”", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 2, "tension": 0, "next": "r2_d4b"},
+        {"id": "r2_41", "recap": "carried on as before", "label": "Carry on as you are", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 0, "next": "r2_end_roommates"}
+      ]
+    },
+    "r2_d3b": {
+      "text": "The spare room gets a lamp, then a bookshelf, then your things, one drawer at a time. Nobody decides this. He knocks once before he comes in now.",
+      "choices": [
+        {"id": "r2_42", "recap": "asked to be honest about it", "label": "Say: “Maybe we should be honest about what this is.”", "reason": null, "weight": 0, "tension": 1, "next": "r2_d4a"},
+        {"id": "r2_43", "recap": "rented a flat “for work”", "label": "Rent a small flat “for work”", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 2, "tension": 0, "next": "r2_d4b"}
+      ]
+    },
+    "r2_d3c": {
+      "text": "The counsellor asks each of you to name one thing you miss. He says, “The way you laughed at my jokes.” You cannot think of an answer fast enough, and he sees it.",
+      "choices": [
+        {"id": "r2_44", "recap": "said they missed who they were with him", "label": "Tell the truth: “I miss who I was with you.”", "reason": null, "weight": 0, "tension": 0, "next": "r2_d4a"},
+        {"id": "r2_45", "recap": "said “Everything”", "label": "Say “Everything,” though it is not quite true", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 1, "tension": 0, "next": "r2_end_roommates"}
+      ]
+    },
+    "r2_d4a": {
+      "text": "You both say it at last, in the kitchen, in daylight: this is not working, and nobody did anything wrong. Silence. Then relief, which is the worst part.",
+      "choices": [
+        {"id": "r2_46", "recap": "agreed to six months apart, no promises", "label": "Agree to six months apart, no promises", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 2, "tension": 0, "next": "r2_end_years"},
+        {"id": "r2_47", "recap": "agreed to part gently and kept things steady for the children", "label": "Agree to part gently and keep things steady for the children", "reason": "Divorce By Mutual Agreement", "weight": 3, "tension": 0, "next": "r2_end_agree"},
+        {"id": "r2_48", "recap": "asked for one more year", "label": "Ask for one more year", "reason": null, "weight": 0, "tension": -1, "next": "r2_end_year"}
+      ]
+    },
+    "r2_d4b": {
+      "text": "The flat is quiet in a different way. He visits on Sundays and stays for coffee, careful and polite, like a guest in a house he used to own. Months become a year.",
+      "choices": [
+        {"id": "r2_49", "recap": "told him they were not coming back", "label": "Tell him you are not coming back", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 3, "tension": 0, "next": "r2_end_years"},
+        {"id": "r2_50", "recap": "kept calling it temporary", "label": "Keep calling it temporary", "reason": "Lived Apart / Separated For Three Years Or More", "weight": 2, "tension": 0, "next": "r2_end_limbo"}
+      ]
+    },
+    "r2_end_reconnect": {
+      "text": "It is not a fix. It is a decision to turn towards each other on purpose, which is all most marriages that last ever really do.",
+      "choices": [],
+      "ending": {"title": "Still here", "tone": "hopeful"}
+    },
+    "r2_end_year": {
+      "text": "You both agree, and both quietly start counting.",
+      "choices": [],
+      "ending": {"title": "One more year", "tone": "uneasy"}
+    },
+    "r2_end_roommates": {
+      "text": "Nothing breaks. That is exactly how it ends: two people, politely sharing a roof.",
+      "choices": [],
+      "ending": {"title": "Roommates", "tone": "uneasy"}
+    },
+    "r2_end_limbo": {
+      "text": "“Temporary” has lasted fourteen months. Neither of you says the other word.",
+      "choices": [],
+      "ending": {"title": "Temporary", "tone": "uneasy"}
+    },
+    "r2_end_years": {
+      "text": "Years pass in separate postcodes. One day a form asks how long you have lived apart, and the number surprises you both.",
+      "choices": [],
+      "ending": {"title": "Three years", "tone": "uneasy"}
+    },
+    "r2_end_agree": {
+      "text": "You split the furniture and the weekends and sign the same page. It is sad, and it is not cruel. Most people expect it to feel worse than it does.",
+      "choices": [],
+      "ending": {"title": "By agreement", "tone": "uneasy"}
+    },
+    "r2_a1": {
+      "text": "You stop counting at four. He isn’t loud or sloppy. He is charming, which is how you know it isn’t the first time. His glass is refilled before it is empty, and nobody but you seems to notice.",
+      "choices": [
+        {"id": "r2_52", "recap": "swapped his glass for water", "label": "Quietly swap his glass for water", "reason": "Addiction", "weight": 1, "tension": 0, "next": "r2_a2a"},
+        {"id": "r2_53", "recap": "said nothing", "label": "Say nothing. It’s a wedding.", "reason": "Addiction", "weight": 1, "tension": 0, "next": "r2_a2b", "sets": ["covered_drinking"]},
+        {"id": "r2_54", "recap": "suggested heading home", "label": "Ask him, lightly, if he wants to head home", "reason": null, "weight": 0, "tension": 0, "next": "r2_a2c"}
+      ]
+    },
+    "r2_a2a": {
+      "text": "He notices, and for a second his face goes blank. Then he laughs, a little too loudly. “Are you counting for me now?” In the car afterwards he is very quiet.",
+      "choices": [
+        {"id": "r2_55", "recap": "said they were worried, not counting", "label": "“I’m not counting to catch you. I’m worried.”", "reason": null, "weight": 0, "tension": -1, "next": "r2_a3a"},
+        {"id": "r2_56", "recap": "told him the count", "label": "“Four, since you ask.”", "reason": "Addiction", "weight": 1, "tension": 1, "next": "r2_a3b"}
+      ]
+    },
+    "r2_a2b": {
+      "text": "The evening blurs pleasantly for everyone but you. At the end you drive, as you have for a while now, and you realise you can’t remember when that started.",
+      "choices": [
+        {"id": "r2_57", "recap": "told themselves it’s only weddings", "label": "Tell yourself it’s only weddings", "reason": "Addiction", "weight": 1, "tension": 0, "next": "r2_a3b", "sets": ["covered_drinking"]},
+        {"id": "r2_58", "recap": "thought back to when it started", "label": "Think back: when did you last let him drive home?", "reason": null, "weight": 0, "tension": 0, "next": "r2_a3a"}
+      ]
+    },
+    "r2_a2c": {
+      "text": "“Already?” he says, smiling, but he checks his glass first. He comes, which surprises you. In the car he says, “I know what you were doing back there.”",
+      "choices": [
+        {"id": "r2_59", "recap": "said “Then you know why”", "label": "“Then you know why.”", "reason": null, "weight": 0, "tension": -1, "next": "r2_a3a"},
+        {"id": "r2_60", "recap": "said they were just tired", "label": "“I was just tired.”", "reason": "Addiction", "weight": 1, "tension": 0, "next": "r2_a3b"}
+      ]
+    },
+    "r2_a3a": {
+      "text": "At home you sit at the kitchen table. You say the word you have both been avoiding: that you think the drinking has become a problem. He doesn’t deny it. He looks at his hands.",
+      "choices": [
+        {"id": "r2_61", "recap": "offered to go with him to get help", "label": "“I’ll come with you to see someone.”", "reason": null, "weight": 0, "tension": -1, "next": "r2_a4a", "sets": ["in_recovery"]},
+        {"id": "r2_62", "recap": "told him to sort it out himself", "label": "“You need to sort this out yourself.”", "reason": "Addiction", "weight": 1, "tension": 1, "next": "r2_a4b"}
+      ]
+    },
+    "r2_a3b": {
+      "text": "The excuses become routine. A bottle behind the cereal. A “quick one” after work. A promise made on Sunday and forgotten by Wednesday. You start to plan your days around his moods.",
+      "choices": [
+        {"id": "r2_63", "recap": "covered for him with the children and his mother", "label": "Cover for him with the children and his mother", "reason": "Addiction", "weight": 2, "tension": 0, "next": "r2_end_cover", "sets": ["covered_drinking"]},
+        {"id": "r2_64", "recap": "told him what it was costing them", "label": "Tell him calmly what it is costing you", "reason": null, "weight": 0, "tension": 0, "next": "r2_a3a"},
+        {"id": "r2_65", "recap": "poured out what is in the cupboard", "label": "Pour out what is in the cupboard", "reason": "Addiction", "weight": 1, "tension": 1, "next": "r2_a4b"}
+      ]
+    },
+    "r2_a4a": {
+      "text": "The clinic is plain, with a box of tissues on every table. He sits very straight. The counsellor says it will take months, and that it may not be a straight line. He looks at you before he answers.",
+      "choices": [
+        {"id": "r2_66", "recap": "took his hand under the table", "label": "Take his hand under the table", "reason": null, "weight": 0, "tension": -1, "next": "r2_end_recovery", "sets": ["in_recovery"]},
+        {"id": "r2_67", "recap": "said they would stay, but not at any cost", "label": "Tell him you will stay, but not at any cost", "reason": null, "weight": 0, "tension": 0, "next": "r2_end_line"}
+      ]
+    },
+    "r2_a4b": {
+      "text": "He promises, and he means it. Three weeks later you find a bottle again. This time he doesn’t hide it. He just looks tired. “I don’t know how to stop,” he says. It is the first honest thing he has said in a year.",
+      "choices": [
+        {"id": "r2_68", "recap": "said they would find help together", "label": "“Then let’s find someone who does.”", "reason": null, "weight": 0, "tension": -1, "next": "r2_a4a", "sets": ["in_recovery"]},
+        {"id": "r2_69", "recap": "said they couldn’t keep doing this", "label": "“I can’t keep doing this.”", "reason": "Addiction", "weight": 2, "tension": 1, "next": "r2_end_line"}
+      ]
+    },
+    "r2_end_recovery": {
+      "text": "It is not a cure, only a start. But he said the words himself, and you were in the room when he did.",
+      "choices": [],
+      "ending": {"title": "A first appointment", "tone": "hopeful"}
+    },
+    "r2_end_line": {
+      "text": "You tell him you will stay while he tries, and that you will not stay if he doesn’t. It is fair, and it is hard, and you both know which it is more.",
+      "choices": [],
+      "ending": {"title": "A line drawn", "tone": "uneasy", "showSupport": true}
+    },
+    "r2_end_cover": {
+      "text": "Everyone thinks you are fine. You are very good at this now. The explanations come before anyone asks, and the cupboard stays full.",
+      "choices": [],
+      "ending": {"title": "The Cover", "tone": "dark", "showSupport": true}
     }
   }
 }

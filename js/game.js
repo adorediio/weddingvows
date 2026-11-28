@@ -5,13 +5,14 @@
 //  final statistics dashboard.
 //
 //  Load this AFTER rooms.js. The enterRoom() and showEnding() defined here
-//  replace the placeholders in rooms.js (you can delete those two).
+//  are the real ones (rooms.js no longer has placeholders).
 // =====================================================
 (function () {
     'use strict';
 
     const API_BASE = 'api/index.php';   // change this if your API lives somewhere else
     const MAX_TENSION_POINTS = 5;       // total choice tension that fills the red vignette
+    const MAX_SAVE_SLOTS = 5;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Verified against MSF's NAVH page. Re-check before submitting.
@@ -46,11 +47,10 @@
     // Sound effects played by scenes ("sfx" in the room JSON). Put your files in /audio
     // and change the file names here. A missing file is skipped (one console warning).
     const SFX_FILES = {
-        shouting:       'audio/argument.mp4',      // the two of them arguing
+        shouting:       'audio/argument.mp4',
         glass_break:    'audio/glassbreaking.mp3',
         scream:         'audio/womanscreaming.mp3',
         man_scream:     'audio/menscreaming.mp3',
-        // no file yet for these three: they are skipped until you add one
         phone_buzz:     'audio/phone_buzz.mp3',
         door_slam:      'audio/door_slam.mp3',
         thrown_objects: 'audio/thrown_objects.mp3'
@@ -58,6 +58,8 @@
     const sfxWarned = {};
     const activeSfx = [];     // sounds still playing, so the next scene can fade them out
     const sfxTimers = [];     // cues waiting on a delay
+    const sfxPool = {};       // preloaded audio, cloned on play
+    let sfxPreloaded = false;
     let soundOn = true;
     let story = null;         // { root, body } for the open story overlay
 
@@ -72,6 +74,10 @@
 
     function wait(ms) {
         return new Promise(function (resolve) { setTimeout(resolve, reduceMotion ? 0 : ms); });
+    }
+
+    function percent(n) {
+        return Number(n).toFixed(1) + '%';
     }
 
     function showToast(message) {
@@ -100,12 +106,18 @@
         return data;
     }
 
-    // Guest player + session, created the first time a choice or save is triggered
+    // Guest player + session, created the first time a choice or save is triggered.
+    // Several callers at once share one request, so two sessions are never created.
+    let sessionPromise = null;
     async function ensureSession() {
         if (game.sessionID) return game.sessionID;
-        const res = await api('POST', '/game/new');
-        game.sessionID = res.sessionID;
-        return game.sessionID;
+        if (!sessionPromise) {
+            sessionPromise = api('POST', '/game/new').then(function (res) {
+                game.sessionID = res.sessionID;
+                return game.sessionID;
+            }).finally(function () { sessionPromise = null; });
+        }
+        return sessionPromise;
     }
 
     async function loadRoom(id) {
@@ -118,7 +130,19 @@
 
     // ---------- sound ----------
 
+    function preloadSfx() {
+        if (sfxPreloaded) return;
+        sfxPreloaded = true;
+        Object.keys(SFX_FILES).forEach(function (id) {
+            const a = new Audio();
+            a.preload = 'auto';
+            a.src = SFX_FILES[id];
+            sfxPool[id] = a;
+        });
+    }
+
     function setSound(on) {
+        if (on) preloadSfx();
         soundOn = on;
         [doorCreak, weddingSong, breathing, heartbeat].forEach(function (a) {
             if (a) a.muted = !on;
@@ -131,7 +155,7 @@
         const file = SFX_FILES[item.id];
         if (!soundOn || !file) return;
         sfxTimers.push(setTimeout(function () {
-            const a = new Audio(file);
+            const a = sfxPool[item.id] ? sfxPool[item.id].cloneNode() : new Audio(file);
             a.volume = item.volume !== undefined ? item.volume : 0.9;
             activeSfx.push(a);
             a.play().catch(function (e) {
@@ -143,8 +167,7 @@
         }, item.delay || 0));
     }
 
-    // Fade out any scene sounds still playing and cancel ones still waiting on a delay,
-    // so a long clip never runs over the next scene
+    // Fade out any scene sounds still playing and cancel ones still waiting on a delay
     function stopSfx(ms) {
         sfxTimers.splice(0).forEach(clearTimeout);
         activeSfx.splice(0).forEach(function (a) {
@@ -527,59 +550,6 @@
         view.focus({ preventScroll: true });
     }
 
-    async function openSaveModal() {
-        const ui = overlayCard('Save Progress');
-        const currentRoom = story ? game.roomId : null;
-        const currentScene = story ? game.sceneID : 'hub';
-        const locationLabel = currentRoom
-            ? 'Room ' + currentRoom + (game.sceneID ? ' (' + game.sceneID + ')' : '')
-            : 'Room Selection Hub';
-
-        ui.card.appendChild(el('p', null, 'Current location: ' + locationLabel));
-
-        const nameField = inputField('Save File Name', 'text', 'save_name', 'off');
-        nameField.input.maxLength = 40;
-        nameField.input.value = game.saveName || ('Save · ' + locationLabel);
-        ui.card.appendChild(nameField.row);
-
-        const error = el('p', 'authError', '');
-        const actions = el('div', 'warnActions');
-        const overwriteBtn = el('button', 'storyChoice', 'Save (Overwrite Current)');
-        const newSlotBtn = el('button', 'storyChoice', 'Save as New File');
-        const cancelBtn = el('button', 'storyChoice', 'Cancel');
-        [overwriteBtn, newSlotBtn, cancelBtn].forEach(function (b) { b.type = 'button'; actions.appendChild(b); });
-        ui.card.append(error, actions);
-
-        async function doSave(asNew) {
-            overwriteBtn.disabled = newSlotBtn.disabled = cancelBtn.disabled = true;
-            error.textContent = '';
-            try {
-                await ensureSession();
-                const res = await api('POST', '/sessions/' + game.sessionID + '/save', {
-                    save_name: nameField.input.value,
-                    current_room: currentRoom,
-                    current_scene: currentScene,
-                    tension_points: game.tensionPoints,
-                    as_new: asNew
-                });
-                game.sessionID = res.save.sessionID;
-                game.saveName = res.save.save_name;
-                ui.wrap.remove();
-                showToast('Saved "' + game.saveName + '"');
-            } catch (e) {
-                error.textContent = e.message;
-                overwriteBtn.disabled = newSlotBtn.disabled = cancelBtn.disabled = false;
-            }
-        }
-
-        overwriteBtn.addEventListener('click', function () { doSave(false); });
-        newSlotBtn.addEventListener('click', function () { doSave(true); });
-        cancelBtn.addEventListener('click', function () { ui.wrap.remove(); });
-        nameField.input.focus({ preventScroll: true });
-    }
-
-const MAX_SAVE_SLOTS = 5;
-
     function buildSlotCard(slotNum, saveData, options) {
         const isEmpty = !saveData;
         const isCurrent = saveData && saveData.sessionID === game.sessionID;
@@ -642,6 +612,7 @@ const MAX_SAVE_SLOTS = 5;
             error.textContent = '';
 
             try {
+                await choiceChain;   // make sure the latest choices are saved first
                 await ensureSession();
                 const payload = {
                     current_room: currentRoom,
@@ -764,16 +735,41 @@ const MAX_SAVE_SLOTS = 5;
         if (typeof startBreathingHeartbeat === 'function') startBreathingHeartbeat();
     }
 
-    function restoreProgress(r) {
+    // Rebuilds heat, theme scores and memory flags from the choice IDs saved so far
+    async function rebuildFate(choiceIDs) {
+        fate.heat = 0;
+        fate.scores = {};
+        fate.flags = {};
+        if (!choiceIDs || !choiceIDs.length) return;
+        const picked = new Set(choiceIDs);
+        for (const room of rooms) {
+            try {
+                const data = await loadRoom(room.id);
+                Object.values(data.scenes).forEach(function (sc) {
+                    (sc.choices || []).forEach(function (c) {
+                        if (picked.has(c.id)) recordChoice(c);
+                    });
+                });
+            } catch (e) {
+                console.warn('Could not rebuild progress for room ' + room.id, e.message);
+            }
+        }
+    }
+
+    async function restoreProgress(r) {
         const done = r.rooms_done || [];
-        done.forEach(function (id) { visitedRooms.add(id); unlockRoom(id + 1); });
+        await rebuildFate(r.choice_ids);
+        done.forEach(function (id) { visitedRooms.add(id); });
+        applyUnlocks();
         skipIntro();
         showRoomChoices();
-        if (done.length >= rooms.length) { showEnding(); return; }
 
         const m = /^r(\d+)_/.exec(r.current_scene || '');
         const room = r.current_room || (m ? Number(m[1]) : null);
-        if (room && !visitedRooms.has(room)) {
+        const resuming = room && !visitedRooms.has(room);
+
+        if (!resuming && done.length && !hasOpenRoom()) { showEnding(); return; }
+        if (resuming) {
             unlockRoom(room);
             enterRoom(room, r.current_scene, r.choice_ids, r.tension_points);
         }
@@ -982,7 +978,9 @@ const MAX_SAVE_SLOTS = 5;
             setTension(typeof savedTension === 'number' ? savedTension : points);
             game.busy = false;
             updateMidgameHud(ROOM_DEFAULT_REASON[id]);
-            renderScene(startScene || game.room.start);
+            // Room 4 opens with the phone argument. If Room 3 was skipped, use the other opening.
+            const opening = (id === 4 && !visitedRooms.has(3)) ? 'r4_s1d' : game.room.start;
+            renderScene(startScene || opening);
         } catch (e) {
             game.busy = false;
             console.error('Could not open room ' + id + ':', e);
@@ -994,6 +992,96 @@ const MAX_SAVE_SLOTS = 5;
                 ]
             );
         }
+    }
+
+    // ---------- dynamic story: conditions, text, routing ----------
+
+    // All keys in a condition must hold. No condition = always true.
+    //   flag / not  : a remembered choice (set with "sets" on a choice)
+    //   score       : ["Reason", minimumPoints]
+    //   heatMin/Max : total tension so far
+    //   room        : that room has been finished
+    //   chance      : 0 to 1, random
+    function check(c) {
+        if (!c) return true;
+        if (c.flag && !fate.flags[c.flag]) return false;
+        if (c.not && fate.flags[c.not]) return false;
+        if (c.score && (fate.scores[c.score[0]] || 0) < c.score[1]) return false;
+        if (c.heatMin !== undefined && fate.heat < c.heatMin) return false;
+        if (c.heatMax !== undefined && fate.heat > c.heatMax) return false;
+        if (c.room && !visitedRooms.has(c.room)) return false;
+        if (c.chance !== undefined && Math.random() >= c.chance) return false;
+        return true;
+    }
+
+    // Scene text plus any "textIf" lines whose condition holds
+    function sceneText(scene) {
+        let t = scene.text;
+        (scene.textIf || []).forEach(function (x) { if (check(x.if)) t += ' ' + x.add; });
+        return t;
+    }
+
+    // Removes quote marks that wrap a whole choice label, so spoken lines
+    // look the same as actions:  “I meant it.”  ->  I meant it.
+    // Quotes inside a label are kept:  Say “That’s all there is.”  stays as it is.
+    function cleanLabel(label) {
+        const m = String(label).match(/^\s*[\u201c"](.*)[\u201d"]\s*$/);
+        return m && !/[\u201c\u201d"]/.test(m[1]) ? m[1] : label;
+    }
+
+    // Shuffles choices; choices with "pin": true stay at the end
+    function shuffled(list) {
+        const a = list.filter(function (c) { return !c.pin; });
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a.concat(list.filter(function (c) { return c.pin; }));
+    }
+
+    // First matching "route" wins, otherwise the plain "next"
+    function resolveNext(choice) {
+        const rules = choice.route || [];
+        for (let i = 0; i < rules.length; i++) {
+            if (check(rules[i].if)) return rules[i].to;
+        }
+        return choice.next;
+    }
+
+    // Saves choices to the API one at a time, in the background. Never blocks the story.
+    let choiceChain = Promise.resolve(true);
+    function logChoice(choiceID, sceneID) {
+        choiceChain = choiceChain.then(async function () {
+            try {
+                await ensureSession();
+                await api('POST', '/choices', { sessionID: game.sessionID, choiceID: choiceID, sceneID: sceneID });
+                return true;
+            } catch (e) {
+                game.offline = true;
+                console.warn('Choice not saved, story continues offline:', e.message);
+                return false;
+            }
+        });
+        return choiceChain;
+    }
+
+    // "What other players chose" appears on the next scene when it arrives
+    function showStatsNote(fromID, pickedID, nowID, logged) {
+        const scene = game.room.scenes[fromID];
+        if (!scene || scene.stats === false) return;
+        logged
+            .then(function (ok) { return ok ? fetchChoiceStats(fromID) : null; })
+            .then(function (stats) {
+                const now = game.room.scenes[nowID];
+                if (!stats || !story || game.sceneID !== nowID || (now && now.ending)) return;
+                const line = describeStats(scene, stats, pickedID);
+                if (!line) return;
+                const box = el('div', 'storyStats');
+                box.setAttribute('role', 'status');
+                box.appendChild(el('p', 'storyStatsLabel', 'What other players chose, one step back'));
+                box.appendChild(el('p', 'storyStatsLine', line));
+                story.body.appendChild(box);
+            });
     }
 
     function renderScene(sceneID) {
@@ -1013,13 +1101,17 @@ const MAX_SAVE_SLOTS = 5;
         story.body.replaceChildren();
         story.body.appendChild(el('p', 'storyRoomName', game.room.title));
 
-        const text = el('p', 'storyText', scene.text);
+        const text = el('p', 'storyText', sceneText(scene));
         text.tabIndex = -1;   // so keyboard and screen reader users land on the new text
         story.body.appendChild(text);
 
+        let options = scene.choices.filter(function (c) { return check(c.requires); });
+        if (!options.length) options = scene.choices;
+        if (!scene.fixedOrder) options = shuffled(options);
+
         const list = el('div', 'storyChoices');
-        scene.choices.forEach(function (choice) {
-            const b = el('button', 'storyChoice', choice.label);
+        options.forEach(function (choice) {
+            const b = el('button', 'storyChoice', cleanLabel(choice.label));
             b.type = 'button';
             b.addEventListener('click', function () { pick(choice, b, list); });
             list.appendChild(b);
@@ -1030,50 +1122,29 @@ const MAX_SAVE_SLOTS = 5;
         (scene.sfx || []).forEach(playSfx);
         if (scene.impact) flashImpact();
         // choices fade in after the player has had a moment with the text
-        setTimeout(function () {
-            list.classList.add('show');
-        }, reduceMotion ? 0 : 700);
+        setTimeout(function () { list.classList.add('show'); }, reduceMotion ? 0 : 700);
     }
 
-    async function pick(choice, button, list) {
+    function pick(choice, button, list) {
         if (game.busy) return;
         game.busy = true;
         list.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
         button.classList.add('chosen');
 
+        const fromScene = game.sceneID;
         setTension(Math.max(0, game.tensionPoints + (choice.tension || 0)));
+        recordChoice(choice);
+        if (choice.jump) fate.forced = choice.jump;
         if (choice.reason) updateMidgameHud(choice.reason);
 
-        // The API decides the next scene. If it cannot be reached, the room file is used.
-        let next = choice.next;
-        let saved = false;
-        try {
-            await ensureSession();
-            const res = await api('POST', '/choices', {
-                sessionID: game.sessionID,
-                choiceID: choice.id,
-                sceneID: game.sceneID
-            });
-            next = res.next_scene || next;
-            saved = true;
-        } catch (e) {
-            game.offline = true;
-            console.warn('API unavailable, continuing from the room file:', e.message);
-        }
+        const next = resolveNext(choice);              // decided here, not by the server
+        const logged = logChoice(choice.id, fromScene); // saved in the background
 
-        // "What other players chose": only after the choice is saved, so the player's own pick
-        // is already counted. A scene can opt out with "stats": false in its room file.
-        const scene = game.room.scenes[game.sceneID];
-        const stats = saved && scene.stats !== false ? await fetchChoiceStats(game.sceneID) : null;
-        const line = stats ? describeStats(scene, stats, choice.id) : null;
-
-        if (line) {
-            await showStatsAndWait(list, line);
-        } else {
-            await wait(450);
-        }
-        game.busy = false;
-        renderScene(next);
+        setTimeout(function () {
+            game.busy = false;
+            renderScene(next);
+            showStatsNote(fromScene, choice.id, next, logged);
+        }, reduceMotion ? 0 : 250);
     }
 
     // ---------- what other players chose ----------
@@ -1095,7 +1166,7 @@ const MAX_SAVE_SLOTS = 5;
         const parts = scene.choices
             .map(function (c) {
                 const s = stats.choices[c.id];
-                return { id: c.id, percent: s ? s.percent : 0, text: c.recap || ('chose \u201c' + c.label + '\u201d') };
+                return { id: c.id, percent: s ? s.percent : 0, text: c.recap || ('chose \u201c' + cleanLabel(c.label) + '\u201d') };
             })
             .filter(function (r) { return r.percent > 0; })
             .sort(function (a, b) { return b.percent - a.percent; });
@@ -1110,22 +1181,6 @@ const MAX_SAVE_SLOTS = 5;
         return sentence.join(', ');
     }
 
-    // Shows the line under the choices and resolves when the player presses Continue.
-    function showStatsAndWait(list, line) {
-        return new Promise(function (resolve) {
-            const box = el('div', 'storyStats');
-            box.setAttribute('role', 'status');
-            box.appendChild(el('p', 'storyStatsLabel', 'What other players chose'));
-            box.appendChild(el('p', 'storyStatsLine', line));
-            const go = el('button', 'storyChoice storyContinue', 'Continue');
-            go.type = 'button';
-            go.addEventListener('click', resolve, { once: true });
-            box.appendChild(go);
-            list.after(box);
-            go.focus({ preventScroll: true });
-        });
-    }
-
     function renderEnding(scene) {
         const e = scene.ending;
 
@@ -1133,16 +1188,24 @@ const MAX_SAVE_SLOTS = 5;
         if (e.tone === 'hopeful') setTension(0);
         if (e.tone === 'dark') setTension(maxTension());
 
+        // an ending can escalate into another room when the player's earlier choices say so
+        (e.jumpIf || []).some(function (j) {
+            if (!fate.forced && check(j.if)) { fate.forced = { room: j.room, scene: j.scene }; return true; }
+            return false;
+        });
+
         story.body.replaceChildren();
         const wrap = el('div', 'storyEnding tone-' + e.tone);
         const title = el('h2', 'endingTitle', e.title);
         title.tabIndex = -1;
         wrap.appendChild(title);
-        wrap.appendChild(el('p', 'storyText', scene.text));
+        wrap.appendChild(el('p', 'storyText', sceneText(scene)));
         if (e.showSupport) wrap.appendChild(buildSupport());
 
-        const lastRoom = visitedRooms.size === rooms.length - 1;
-        const btn = el('button', 'storyChoice endingBtn', lastRoom ? 'See the national figures' : 'Back to the rooms');
+        const lastRoom = isLastRoom(game.roomId);
+        const forcedNext = fate.forced && !visitedRooms.has(fate.forced.room);
+        const btn = el('button', 'storyChoice endingBtn',
+            forcedNext ? 'Continue' : (lastRoom ? 'See the national figures' : 'Back to the rooms'));
         btn.type = 'button';
         btn.addEventListener('click', finishRoom);
         wrap.appendChild(btn);
@@ -1174,8 +1237,15 @@ const MAX_SAVE_SLOTS = 5;
         story.body.appendChild(el('p', 'storyText', 'Loading your halfway snapshot...'));
 
         try {
+            await choiceChain;   // make sure the latest choices are saved first
             await ensureSession();
-            const qs = '?reason=' + encodeURIComponent('Adultery & Infidelity') +
+
+            // The player's own leading reason so far (it is no longer always infidelity)
+            const leading = Object.entries(fate.scores).sort(function (a, b) { return b[1] - a[1]; })[0];
+            const myReason = leading ? leading[0] : 'Unreasonable Behaviour';
+            const sawInfidelity = (fate.scores['Adultery & Infidelity'] || 0) > 0;
+
+            const qs = '?reason=' + encodeURIComponent(myReason) +
                        '&sessionID=' + encodeURIComponent(game.sessionID);
             const data = await api('GET', '/stats/midgame' + qs);
 
@@ -1192,7 +1262,7 @@ const MAX_SAVE_SLOTS = 5;
                     soFar.top_reason + '.'));
             } else {
                 wrap.appendChild(el('p', 'dashLead',
-                    'Across ' + (soFar.choices_made || 0) + ' choices so far, you have kept communication open — let’s see if it holds when trust is tested.'));
+                    'Across ' + (soFar.choices_made || 0) + ' choices so far, you have kept things calm and communication open.'));
             }
 
             const comm = data.community || {};
@@ -1202,9 +1272,15 @@ const MAX_SAVE_SLOTS = 5;
 
             const grid = el('div', 'halfwayGrid');
 
+            // First stat: the Room 2 message stat only makes sense on the infidelity path
             const c1 = el('div', 'halfwayStat');
-            c1.appendChild(el('div', 'halfwayNum', secretPct + '%'));
-            c1.appendChild(el('div', 'halfwayLbl', 'of players hid messages in Room 2 (MongoDB)'));
+            if (sawInfidelity) {
+                c1.appendChild(el('div', 'halfwayNum', secretPct + '%'));
+                c1.appendChild(el('div', 'halfwayLbl', 'of players hid messages in Room 2 (MongoDB)'));
+            } else {
+                c1.appendChild(el('div', 'halfwayNum', String(soFar.choices_made || 0)));
+                c1.appendChild(el('div', 'halfwayLbl', 'choices you have made so far on your path'));
+            }
 
             const c2 = el('div', 'halfwayStat');
             c2.appendChild(el('div', 'halfwayNum', billsPct + '%'));
@@ -1230,7 +1306,7 @@ const MAX_SAVE_SLOTS = 5;
                 }
             }
 
-            const cont = el('button', 'storyChoice endingBtn', 'Continue to Room 3');
+            const cont = el('button', 'storyChoice endingBtn', 'Continue');
             cont.type = 'button';
             cont.addEventListener('click', function () {
                 closeStory();
@@ -1249,19 +1325,26 @@ const MAX_SAVE_SLOTS = 5;
     function finishRoom() {
         const id = game.roomId;
         if (game.sessionID) {
-            api('POST', '/sessions/' + game.sessionID + '/room-done', { room: id }).catch(function (e) {
-                console.warn('Room progress not saved:', e.message);
-            });
+            // runs after every background choice save, so the server sees them in order
+            choiceChain.then(function () {
+                return api('POST', '/sessions/' + game.sessionID + '/room-done', { room: id });
+            }).catch(function (e) { console.warn('Room progress not saved:', e.message); });
         }
         closeStory();
         restoreCardAudio();
-        unlockRoom(id + 1);
-        completeRoom(id);   // calls showEnding() once all four rooms are done
-        if (id === 2 && visitedRooms.size < rooms.length) {
+        const forced = fate.forced;
+        fate.forced = null;
+        if (forced && !visitedRooms.has(forced.room)) unlockRoom(forced.room);   // so the game can't end first
+        completeRoom(id);   // marks it done, unlocks cards by their rules, ends the game if none are left
+        if (forced && !visitedRooms.has(forced.room)) {
+            enterRoom(forced.room, forced.scene, null, Math.max(0, fate.heat));   // arrive already tense
+            return;
+        }
+        if (id === 2 && hasOpenRoom()) {
             showHalfwayCheckpoint();
             return;
         }
-        if (visitedRooms.size < rooms.length) setCardsVisible(true);
+        if (hasOpenRoom()) setCardsVisible(true);
     }
 
     function playAgain() {
@@ -1269,7 +1352,7 @@ const MAX_SAVE_SLOTS = 5;
         location.reload();
     }
 
-   // ---------- final dashboard (4-slide carousel + data visuals) ----------
+    // ---------- final dashboard (4-slide carousel + data visuals) ----------
 
     let dashKeyHandler = null;
 
@@ -1281,6 +1364,7 @@ const MAX_SAVE_SLOTS = 5;
         story.body.appendChild(el('p', 'storyText', 'Loading the national figures...'));
 
         try {
+            await choiceChain;   // make sure the latest choices are saved first
             await ensureSession();
             const res = await api('POST', '/sessions/' + game.sessionID + '/complete');
             renderDashboard(res.outcome);
@@ -1296,11 +1380,7 @@ const MAX_SAVE_SLOTS = 5;
         }
     }
 
-    function percent(n) {
-        return Number(n).toFixed(1) + '%';
-    }
-
-   // Clean, editorial stat strip inside each escalation rung (preserves all figures)
+    // Clean, editorial stat strip inside each escalation rung (preserves all figures)
     function buildRungVisuals(o, r) {
         const strip = el('div', 'rungStats');
 

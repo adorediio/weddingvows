@@ -2,18 +2,46 @@
 //  ROOM CHOICES
 // =====================================================
 
+// What the player's choices have added up to so far.
+// flags = things the player did (set by "sets" in the room files).
+// forced = a jump set by a choice or ending, used when the room ends.
+const fate = { heat: 0, scores: {}, flags: {}, forced: null };
+
+function recordChoice(c) {
+    fate.heat += (c.heat !== undefined ? c.heat : (c.tension || 0));
+    if (c.reason && (c.weight || 0) > 0) {
+        fate.scores[c.reason] = (fate.scores[c.reason] || 0) + c.weight;
+    }
+    (c.sets || []).forEach(function (f) { fate.flags[f] = true; });
+}
+
+// What an "opens" rule gets to look at. extraDone = a room about to be marked done.
+function fateState(extraDone) {
+    return {
+        heat: fate.heat,
+        done: function (id) { return visitedRooms.has(id) || id === extraDone; },
+        score: function (reason) { return fate.scores[reason] || 0; },
+        flag: function (name) { return !!fate.flags[name]; },
+        points: function () {
+            return Object.values(fate.scores).reduce(function (a, b) { return a + b; }, 0);
+        }
+    };
+}
+
 // locked: true = greyed out with a lock and can't be clicked.
-// Call unlockRoom(id) later (e.g. unlockRoom(2);) when your condition is met.
+// opens = the rule that unlocks the card. Once unlocked, a card stays unlocked.
 const rooms = [
     { id: 1, title: 'Happy Family',    sub: 'Where it all began', img: 'images/card1.png', locked: false },
-    { id: 2, title: 'Temptation',      sub: 'A wandering eye',    img: 'images/card2.png', locked: true },
-    { id: 3, title: 'Phone Discovery', sub: 'The messages',       img: 'images/card3.png', locked: true },
-    { id: 4, title: 'Argument',        sub: 'Voices rise',        img: 'images/card4.png', locked: true }
+    { id: 2, title: 'Temptation',      sub: 'A wandering eye',    img: 'images/card2.png', locked: true,
+      opens: function (s) { return s.done(1) && (s.heat >= 1 || s.points() >= 1) && s.score('Divorce By Mutual Agreement') < 2 && s.score('Personality Differences') < 4; } },
+    { id: 3, title: 'Phone Discovery', sub: 'The messages',       img: 'images/card3.png', locked: true,
+      opens: function (s) { return s.done(2) && s.score('Adultery & Infidelity') >= 2; } },
+    { id: 4, title: 'Argument',        sub: 'Voices rise',        img: 'images/card4.png', locked: true,
+      opens: function (s) { return (s.done(2) || s.done(3)) && (s.heat >= 5 || s.score('Domestic Violence & Abuses') >= 2); } }
 ];
 const visitedRooms = new Set();
 const cardEls = {};   // room id -> its card element
 
-// Update every card's look from its locked flag
 function refreshLocks() {
     rooms.forEach(function (room) {
         const card = cardEls[room.id];
@@ -23,9 +51,8 @@ function refreshLocks() {
     });
 }
 
-// Call this from anywhere, whenever your unlock condition is met, e.g. unlockRoom(2);
 function unlockRoom(id) {
-    const room = rooms.find(r => r.id === id);
+    const room = rooms.find(function (r) { return r.id === id; });
     if (room) {
         room.locked = false;
         refreshLocks();
@@ -35,17 +62,35 @@ function unlockRoom(id) {
 // Call this when the player finishes a room
 function completeRoom(id) {
     visitedRooms.add(id);
+    applyUnlocks();
+    if (!hasOpenRoom()) showEnding();   // nothing left to open = the story is over
+}
+
+function applyUnlocks() {
+    const s = fateState();
+    rooms.forEach(function (r) {
+        if (r.locked && r.opens && r.opens(s)) r.locked = false;
+    });
     refreshLocks();
-    if (visitedRooms.size === rooms.length) showEnding();
+}
+
+function hasOpenRoom() {
+    return rooms.some(function (r) { return !r.locked && !visitedRooms.has(r.id); });
+}
+
+// True if finishing room `id` leaves nothing to play (used for the button label)
+function isLastRoom(id) {
+    const s = fateState(id);
+    return !rooms.some(function (r) {
+        return r.id !== id && !visitedRooms.has(r.id) && (!r.locked || (r.opens && r.opens(s)));
+    });
 }
 
 function showRoomChoices() {
-    // Pulsing background
     const pulseOverlay = document.createElement('div');
     pulseOverlay.id = 'pulseOverlay';
     document.body.appendChild(pulseOverlay);
 
-    // Text above the cards
     const prompt = document.createElement('div');
     prompt.id = 'roomPrompt';
     prompt.innerHTML = 'Are you second guessing your marriage? <small>Do these look familiar?</small>';
@@ -61,35 +106,24 @@ function showRoomChoices() {
         card.style.backgroundSize = 'cover';
         card.style.backgroundPosition = 'center';
         card.style.animationDelay = (i * 0.15) + 's';
-        card.innerHTML = `<div class="roomNum">${room.id}</div><h3>${room.title}</h3><p>${room.sub}</p>`;
+        card.innerHTML = '<div class="roomNum">' + room.id + '</div><h3>' + room.title + '</h3><p>' + room.sub + '</p>';
 
-        // Lock icon (only visible while the card is locked)
         const lock = document.createElement('div');
         lock.className = 'lockIcon';
         lock.textContent = '🔒';
         card.appendChild(lock);
 
         cardEls[room.id] = card;
-
         card.addEventListener('click', function () {
-            if (room.locked) return;   // locked = ignore clicks
+            if (room.locked) return;
             enterRoom(room.id);
         });
         box.appendChild(card);
     });
 
     document.body.appendChild(box);
-
-    // Apply the locked look to the cards
     refreshLocks();
     if (typeof window.loadHubPulse === 'function') window.loadHubPulse();
 }
 
-//function enterRoom(id) {
-    //console.log('Entering room', id);   // TODO: load each room's scene here
-//}
-
-function showEnding() {
-    stopTension();
-    console.log('All rooms visited, show the divorce stats dashboard');   // TODO
-}
+// enterRoom() and showEnding() are defined in game.js

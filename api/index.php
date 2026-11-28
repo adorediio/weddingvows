@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../mysql/queries.php';
 require_once __DIR__ . '/../mysql/auth.php';
 require_once __DIR__ . '/choices.php';

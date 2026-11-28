@@ -1,208 +1,360 @@
 {
   "room": 1,
   "title": "Happy Family",
-  "maxTension": 3,
+  "maxTension": 5,
   "start": "r1_s1",
   "scenes": {
     "r1_s1": {
       "text": "Sunday morning. The pancakes are a little burnt, the kids are laughing, and he is humming off-key. It feels easy.",
       "choices": [
-        {
-          "id": "r1_01",
-          "label": "Soak it in",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_s2a"
-        },
-        {
-          "id": "r1_02",
-          "label": "Notice the unopened bills by the door",
-          "reason": "Financial Problems",
-          "weight": 1,
-          "tension": 0,
-          "next": "r1_s2b"
-        }
+        {"id": "r1_01", "recap": "soaked it in", "label": "Soak it in", "reason": null, "weight": 0, "tension": 0, "next": "r1_s2a", "route": [{"if": {"chance": 0.3}, "to": "r1_s2b"}]},
+        {"id": "r1_02", "recap": "noticed the unopened bills by the door", "label": "Notice the unopened bills by the door", "reason": "Financial Problems", "weight": 1, "tension": 0, "next": "r1_s2b"}
       ]
     },
     "r1_s2a": {
       "text": "He pulls you into a hug and the kids pile on. Later, almost in passing, he says work has been slow.",
       "choices": [
-        {
-          "id": "r1_03",
-          "label": "Ask how he really feels",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_s3a"
-        },
-        {
-          "id": "r1_04",
-          "label": "Let it go. It’s Sunday.",
-          "reason": "Financial Problems",
-          "weight": 1,
-          "tension": 0,
-          "next": "r1_s3b"
-        }
+        {"id": "r1_03", "recap": "asked how he really feels", "label": "Ask how he really feels", "reason": null, "weight": 0, "tension": 0, "next": "r1_s3a"},
+        {"id": "r1_04", "recap": "let it go because it was Sunday", "label": "Let it go. It’s Sunday.", "reason": "Financial Problems", "weight": 1, "tension": 0, "next": "r1_s3b"},
+        {"id": "r1_66", "recap": "wondered when they stopped wanting the same things", "label": "Wonder when the two of you stopped wanting the same things", "reason": "Personality Differences", "weight": 1, "tension": 0, "next": "r1_p1"},
+        {"id": "r1_88", "recap": "noticed he had started asking where they were", "label": "Notice he has started asking where you were", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 0, "sets": ["checks_in"], "next": "r1_x1"}
       ]
     },
     "r1_s2b": {
       "text": "You open one envelope. The number is bigger than you expected, and he sees your face.",
       "choices": [
-        {
-          "id": "r1_05",
-          "label": "Show him",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_s3a"
-        },
-        {
-          "id": "r1_06",
-          "label": "Hide it for now",
-          "reason": "Financial Problems",
-          "weight": 1,
-          "tension": 0,
-          "next": "r1_s3b"
-        }
+        {"id": "r1_05", "recap": "showed him", "label": "Show him", "reason": null, "weight": 0, "tension": 0, "next": "r1_s3a"},
+        {"id": "r1_06", "recap": "hid it for now", "label": "Hide it for now", "reason": "Financial Problems", "weight": 1, "tension": 0, "next": "r1_s3b"},
+        {"id": "r1_47", "recap": "let him take over the bills", "label": "Let him take over the bills", "reason": "Financial Problems", "weight": 1, "tension": 0, "next": "r1_c1"}
       ]
     },
     "r1_s3a": {
       "text": "He tells you the slow months have really been three months. He says it like a confession, then waits to see how you will take it.",
       "choices": [
-        {
-          "id": "r1_07",
-          "label": "“We’ll manage it together.”",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_s4a"
-        },
-        {
-          "id": "r1_08",
-          "label": "“Why didn’t you tell me sooner?”",
-          "reason": null,
-          "weight": 0,
-          "tension": 1,
-          "next": "r1_s4b"
-        }
+        {"id": "r1_07", "recap": "said they would manage it together", "label": "“We’ll manage it together.”", "reason": null, "weight": 0, "tension": 0, "next": "r1_s4a"},
+        {"id": "r1_08", "recap": "asked why he hadn’t said sooner", "label": "“Why didn’t you tell me sooner?”", "reason": null, "weight": 0, "tension": 1, "next": "r1_s4b"},
+        {"id": "r1_67", "recap": "noticed how differently they take bad news", "label": "Notice how differently the two of you take bad news", "reason": "Personality Differences", "weight": 1, "tension": 0, "next": "r1_p1"}
       ]
     },
     "r1_s3b": {
       "text": "That evening his mother calls during dinner. “Are you two managing?” she asks him, not you. He answers for both of you.",
       "choices": [
-        {
-          "id": "r1_09",
-          "label": "Take the phone and speak for yourself",
-          "reason": "Personality Differences",
-          "weight": 1,
-          "tension": 1,
-          "next": "r1_s4b"
-        },
-        {
-          "id": "r1_10",
-          "label": "Let him handle it",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_s4c"
-        }
+        {"id": "r1_09", "recap": "took the phone and spoke for themselves", "label": "Take the phone and speak for yourself", "reason": "Personality Differences", "weight": 1, "tension": 1, "next": "r1_s4b"},
+        {"id": "r1_10", "recap": "let him handle it", "label": "Let him handle it", "reason": null, "weight": 0, "tension": 0, "next": "r1_s4c"},
+        {"id": "r1_48", "recap": "told him to handle the money, then", "label": "“Fine. You handle the money, then.”", "reason": "Financial Problems", "weight": 1, "tension": 1, "next": "r1_c1"},
+        {"id": "r1_68", "recap": "realised they have never once agreed on how to handle anything", "label": "Realise you have never once agreed on how to handle anything", "reason": "Personality Differences", "weight": 1, "tension": 1, "next": "r1_p1"}
       ]
     },
     "r1_s4a": {
       "text": "His shoulders drop. The kids have drawn on the fridge door again, and for a moment you both laugh at nothing.",
       "choices": [
-        {
-          "id": "r1_11",
-          "label": "Sit down tonight and make a plan",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_end_open"
-        },
-        {
-          "id": "r1_12",
-          "label": "Say it can wait until the weekend",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_end_quiet"
-        }
+        {"id": "r1_11", "recap": "sat down tonight and made a plan", "label": "Sit down tonight and make a plan", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_open"},
+        {"id": "r1_12", "recap": "said it can wait until the weekend", "label": "Say it can wait until the weekend", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_quiet"},
+        {"id": "r1_63", "recap": "said the money wasn’t the real problem", "label": "“Honestly? The money isn’t the real problem.”", "reason": null, "weight": 0, "tension": 0, "next": "r1_m1"}
       ]
     },
     "r1_s4b": {
       "text": "“I was handling it,” he says. The word hangs in the air between you.",
       "choices": [
-        {
-          "id": "r1_13",
-          "label": "“Partners don’t handle each other.”",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_end_open"
-        },
-        {
-          "id": "r1_14",
-          "label": "Drop it. Not today.",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_end_quiet"
-        },
-        {
-          "id": "r1_15",
-          "label": "“Handling it? With what money?”",
-          "reason": "Financial Problems",
-          "weight": 1,
-          "tension": 2,
-          "next": "r1_end_strain"
-        }
+        {"id": "r1_13", "recap": "said partners don’t do it alone", "label": "“We're partners, you shouldn't be handling it alone.”", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_open"},
+        {"id": "r1_14", "recap": "dropped it", "label": "Drop it. Not today.", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_quiet"},
+        {"id": "r1_15", "recap": "asked “With what money?”", "label": "“Handling it? With what money?”", "reason": "Financial Problems", "weight": 1, "tension": 2, "next": "r1_end_strain"},
+        {"id": "r1_64", "recap": "said it wasn’t only about money", "label": "“I don’t think this is only about the money.”", "reason": null, "weight": 0, "tension": 0, "next": "r1_m1"}
       ]
     },
     "r1_s4c": {
       "text": "Rain starts against the window. He ends the call and says nothing about what his mother said.",
       "choices": [
-        {
-          "id": "r1_16",
-          "label": "Ask what she said",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_end_open"
-        },
-        {
-          "id": "r1_17",
-          "label": "Turn the television up",
-          "reason": null,
-          "weight": 0,
-          "tension": 0,
-          "next": "r1_end_quiet"
-        }
+        {"id": "r1_16", "recap": "asked what she said", "label": "Ask what she said", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_open"},
+        {"id": "r1_17", "recap": "turned the television up", "label": "Turn the television up", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_quiet"},
+        {"id": "r1_65", "recap": "said what they have both been avoiding", "label": "Say what you have both been avoiding", "reason": null, "weight": 0, "tension": 0, "next": "r1_m1"}
       ]
     },
     "r1_end_open": {
       "text": "You go through it together at the kitchen table. It isn’t fun, but neither of you is facing it alone.",
       "choices": [],
-      "ending": {
-        "title": "Talking it out",
-        "tone": "hopeful"
-      }
+      "ending": {"title": "Talking it out", "tone": "hopeful"}
     },
     "r1_end_quiet": {
-      "text": "The day stays warm. The envelope stays closed. Something small has been put away for later.",
+      "text": "The day stays warm. The talk about money is folded up and put away, like a letter you mean to answer later. Something small has been saved for another day.",
       "choices": [],
-      "ending": {
-        "title": "The quiet",
-        "tone": "uneasy"
-      }
+      "ending": {"title": "The quiet", "tone": "uneasy"}
     },
     "r1_end_strain": {
       "text": "You go to bed with the dishes half done and your backs to each other. It is a small thing, the first of its kind, and you both notice.",
       "choices": [],
-      "ending": {
-        "title": "The first night angry",
-        "tone": "uneasy"
-      }
+      "ending": {"title": "The first night angry", "tone": "uneasy"}
+    },
+    "r1_c1": {
+      "text": "He takes over the money kindly, and without a fuss. Within a day your bank card is in his wallet. “Easier this way,” he says, smiling. “You don’t need to worry about any of it.”",
+      "choices": [
+        {"id": "r1_18", "recap": "let him take over", "label": "Let him. It does feel easier.", "reason": "Financial Problems", "weight": 1, "tension": 0, "next": "r1_c2a"},
+        {"id": "r1_19", "recap": "asked for their card back", "label": "Ask for your card back", "reason": null, "weight": 0, "tension": 0, "next": "r1_c2b"},
+        {"id": "r1_20", "recap": "started putting cash aside in secret", "label": "Say nothing, but start putting cash aside", "reason": "Financial Problems", "weight": 1, "tension": 1, "next": "r1_c2c", "sets": ["cash_tin"]}
+      ]
+    },
+    "r1_c2a": {
+      "text": "A few weeks on, you ask for money for your sister’s birthday gift. He asks what it is for, then how much, then why so much. He gives you half. The receipt is expected.",
+      "choices": [
+        {"id": "r1_21", "recap": "handed him the receipt without a word", "label": "Hand him the receipt without a word", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "next": "r1_c3a"},
+        {"id": "r1_22", "recap": "refused to show a receipt", "label": "“I’m an adult. I don’t need to show a receipt.”", "reason": null, "weight": 0, "tension": 1, "next": "r1_c3b"}
+      ]
+    },
+    "r1_c2b": {
+      "text": "He laughs, lightly, but his hand closes over yours on the wallet. “Why? Don’t you trust me?” The smile does not move.",
+      "choices": [
+        {"id": "r1_23", "recap": "backed down", "label": "Back down: “No, it’s fine.”", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "next": "r1_c3a"},
+        {"id": "r1_24", "recap": "demanded the card back", "label": "“It’s mine. Give it back.”", "reason": null, "weight": 0, "tension": 2, "next": "r1_c3b"},
+        {"id": "r1_25", "recap": "suggested a joint account", "label": "Suggest a joint account you can both see", "reason": null, "weight": 0, "tension": -1, "next": "r1_c3c"}
+      ]
+    },
+    "r1_c2c": {
+      "text": "The notes are in a tea tin behind the rice. Your hands are shaking as you count them, and you hate that they are. Something small has quietly become a secret.",
+      "choices": [
+        {"id": "r1_26", "recap": "told him about it tonight", "label": "Tell him about it tonight", "reason": null, "weight": 0, "tension": 0, "next": "r1_c3c"},
+        {"id": "r1_27", "recap": "kept it hidden, just in case", "label": "Keep it hidden, just in case", "reason": "Financial Problems", "weight": 1, "tension": 1, "next": "r1_c3a", "sets": ["cash_tin"]}
+      ]
+    },
+    "r1_c3a": {
+      "text": "The rules multiply so quietly they never feel like rules. Who you text. How long you stay at your sister’s. He checks your phone “because he worries.” Your sister stops calling. She says you always seem busy.",
+      "textIf": [
+        {"if": {"flag": "shared_location"}, "add": "He already knows where you are. He asks anyway."}
+      ],
+      "sfx": ["phone_buzz"],
+      "choices": [
+        {"id": "r1_28", "recap": "called their sister anyway, from the stairwell", "label": "Call your sister anyway, from the stairwell", "reason": null, "weight": 0, "tension": 1, "next": "r1_c4a"},
+        {"id": "r1_29", "recap": "handed over their phone unasked", "label": "Hand him the phone before he asks", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "next": "r1_c4b"},
+        {"id": "r1_30", "recap": "called it control out loud", "label": "Say it out loud: “This isn’t worry. This is control.”", "reason": null, "weight": 0, "tension": 2, "next": "r1_c4c", "sets": ["spoke_up"]},
+        {"id": "r1_92", "recap": "stopped answering their sister", "label": "Stop picking up your sister’s calls, to avoid the questions", "requires": {"flag": "excused"}, "reason": "Unreasonable Behaviour", "weight": 1, "tension": 1, "sets": ["isolated"], "next": "r1_c4b"}
+      ]
+    },
+    "r1_c3b": {
+      "text": "He doesn’t shout. He goes quiet, which is worse. Dinner goes cold. By morning the card is back on the counter, next to a list of everything he has “done for you.”",
+      "choices": [
+        {"id": "r1_31", "recap": "took the card and said thank you", "label": "Take the card and say thank you", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 0, "next": "r1_c4b"},
+        {"id": "r1_32", "recap": "said they would talk about it tonight", "label": "Take the card and the list: “We’re talking about this tonight.”", "reason": null, "weight": 0, "tension": 1, "next": "r1_c4c", "sets": ["spoke_up"]}
+      ]
+    },
+    "r1_c3c": {
+      "text": "He listens with his arms folded. “A joint account,” he repeats, as if tasting the words. “Fine. Let’s do that.” You cannot tell whether you have won something or been handled.",
+      "choices": [
+        {"id": "r1_33", "recap": "went to the bank together tomorrow", "label": "Go to the bank together tomorrow", "reason": null, "weight": 0, "tension": -1, "next": "r1_end_repair"},
+        {"id": "r1_34", "recap": "waited to see if he followed through", "label": "Wait and see whether he follows through", "reason": null, "weight": 0, "tension": 0, "next": "r1_c4b"}
+      ]
+    },
+    "r1_c4a": {
+      "text": "Your sister picks up on the first ring. “Are you okay?” Your throat closes. You have rehearsed a hundred excuses and none of them come out. Above you, a door opens. “Who are you talking to?”",
+      "choices": [
+        {"id": "r1_35", "recap": "hung up on their sister", "label": "“Nobody. I’ll call you back.”", "reason": null, "weight": 0, "tension": 1, "next": "r1_c5a"},
+        {"id": "r1_36", "recap": "whispered for their sister to come", "label": "Whisper: “I need you to come and get me.”", "reason": "Domestic Violence & Abuses", "weight": 2, "tension": 1, "next": "r1_end_sister", "sets": ["sister_knows"]}
+      ]
+    },
+    "r1_c4b": {
+      "text": "You stop mentioning your friends. You stop buying things. Then one night you realise you have not made a single decision all week, and nobody forced you. You simply stopped.",
+      "choices": [
+        {"id": "r1_37", "recap": "asked for space of their own", "label": "Tell him you need some space of your own", "reason": null, "weight": 0, "tension": 1, "next": "r1_c5a"},
+        {"id": "r1_38", "recap": "let it be", "label": "Let it be. It’s quieter this way.", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 0, "next": "r1_end_smaller"},
+        {"id": "r1_39", "recap": "booked a visit to their sister’s, no explanation", "label": "Book a visit to your sister’s, no explanation", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_sister", "sets": ["sister_knows"]}
+      ]
+    },
+    "r1_c4c": {
+      "text": "He sets his glass down very carefully. “Control?” For a moment his face belongs to a stranger. Then his hand closes around your wrist. Not hard, he will say later. Barely anything. He holds it there.",
+      "impact": true,
+      "choices": [
+        {"id": "r1_40", "recap": "froze and didn’t pull away", "label": "Don’t pull away. Don’t breathe.", "reason": "Domestic Violence & Abuses", "weight": 2, "tension": 2, "next": "r1_c5a", "sets": ["froze"]},
+        {"id": "r1_41", "recap": "told him to let go", "label": "“Let go of my wrist.”", "reason": "Domestic Violence & Abuses", "weight": 3, "tension": 1, "next": "r1_c5b"},
+        {"id": "r1_42", "recap": "pulled free and stepped back", "label": "Pull free and step back", "reason": "Domestic Violence & Abuses", "weight": 3, "tension": 2, "next": "r1_c5b"}
+      ]
+    },
+    "r1_c5a": {
+      "text": "He lets go and smiles as if nothing happened. “You’re being dramatic.” The marks will fade by morning. What you were about to say will take longer.",
+      "choices": [
+        {"id": "r1_43", "recap": "photographed their wrist", "label": "Photograph your wrist when he is asleep", "reason": "Domestic Violence & Abuses", "weight": 3, "tension": 1, "next": "r1_end_proof", "sets": ["proof"]},
+        {"id": "r1_44", "recap": "agreed they were being dramatic", "label": "Agree: “Maybe I was.”", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 0, "next": "r1_end_smaller"}
+      ]
+    },
+    "r1_c5b": {
+      "text": "He lets go at once and steps back, palms open, as if you were the one who grabbed. Then his eyes go to the keys on the hook, and back to you. “Where do you think you’re going?”",
+      "choices": [
+        {"id": "r1_45", "recap": "took the keys and walked out", "label": "Take the keys and walk out", "reason": "Domestic Violence & Abuses", "weight": 3, "tension": 2, "next": "r1_end_out", "sets": ["left_once"]},
+        {"id": "r1_46", "recap": "stayed to calm him down", "label": "Stay. Try to calm him down.", "reason": "Domestic Violence & Abuses", "weight": 3, "tension": 2, "next": "r1_end_grip", "jump": {"room": 4, "scene": "r4_s1c"}}
+      ]
+    },
+    "r1_end_repair": {
+      "text": "It is a small thing: two names on one account. But it is the first time in months that a decision about your life was made by both of you.",
+      "choices": [],
+      "ending": {"title": "A joint account", "tone": "hopeful"}
+    },
+    "r1_end_sister": {
+      "text": "She doesn’t ask for details. She says, “I’m coming on Saturday.” For the first time in weeks, someone outside this house knows.",
+      "choices": [],
+      "ending": {"title": "Someone knows", "tone": "uneasy", "showSupport": true}
+    },
+    "r1_end_smaller": {
+      "text": "Nothing dramatic happens. That is what people will not understand later. The world just gets smaller, one reasonable-sounding rule at a time, until it is exactly the size of this house.",
+      "choices": [],
+      "ending": {"title": "The smaller world", "tone": "dark", "showSupport": true}
+    },
+    "r1_end_proof": {
+      "text": "You photograph the faint marks with a hand that will not stay still, and hide the picture where he won’t look. It is not a plan yet. It is the first thing that is only yours.",
+      "choices": [],
+      "ending": {"title": "Proof", "tone": "uneasy", "showSupport": true}
+    },
+    "r1_end_out": {
+      "text": "The keys are cold in your hand. You are on the stairs before you hear anything behind you. You do not know where you are going yet. You only know it is not back.",
+      "choices": [],
+      "ending": {"title": "Out", "tone": "dark", "showSupport": true}
+    },
+    "r1_end_grip": {
+      "text": "“Don’t you walk away from me.” The keys leave your hand. The hallway light clicks off. Whatever happens next will not be small.",
+      "choices": [],
+      "ending": {"title": "The door that stays shut", "tone": "dark"}
+    },
+    "r1_m1": {
+      "text": "It was never really the bills. You both know it. For months you have run the house like colleagues, and tonight, at the kitchen table, there is nobody left to perform for.",
+      "choices": [
+        {"id": "r1_49", "recap": "said they weren’t happy", "label": "Say it: “I don’t think we are happy.”", "reason": null, "weight": 0, "tension": 0, "next": "r1_m2a"},
+        {"id": "r1_50", "recap": "asked whether he has felt it too", "label": "Ask whether he has felt it too", "reason": null, "weight": 0, "tension": 0, "next": "r1_m2b"},
+        {"id": "r1_51", "recap": "lost their nerve and went back to the bills", "label": "Lose your nerve and go back to the bills", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_quiet"}
+      ]
+    },
+    "r1_m2a": {
+      "text": "He doesn’t flinch. He looks almost relieved, which is the strangest part. “No,” he says. “I haven’t been either.”",
+      "choices": [
+        {"id": "r1_52", "recap": "asked if he wanted to try again", "label": "“Do you want to try again?”", "reason": null, "weight": 0, "tension": -1, "next": "r1_m3a"},
+        {"id": "r1_53", "recap": "asked “Then what are we doing?”", "label": "“Then what are we doing?”", "reason": null, "weight": 0, "tension": 0, "next": "r1_m3b"}
+      ]
+    },
+    "r1_m2b": {
+      "text": "He puts the pen down. “Since the spring,” he says. “I just didn’t know how to say it without making it your fault.”",
+      "choices": [
+        {"id": "r1_54", "recap": "said it wasn’t his fault either", "label": "“It isn’t your fault either.”", "reason": null, "weight": 0, "tension": -1, "next": "r1_m3b"},
+        {"id": "r1_55", "recap": "asked why he said nothing", "label": "“Why did you say nothing?”", "reason": null, "weight": 0, "tension": 1, "next": "r1_m3a"}
+      ]
+    },
+    "r1_m3a": {
+      "text": "You try, properly. Counselling on Tuesdays, a weekend away, a rota for the children. It is kind, and it is exhausting. One evening the counsellor asks what each of you wants. You answer at the same moment, and it is the same answer.",
+      "choices": [
+        {"id": "r1_56", "recap": "said “Not this” together", "label": "Say it together: “Not this.”", "reason": "Divorce By Mutual Agreement", "weight": 2, "tension": 0, "next": "r1_m4"},
+        {"id": "r1_57", "recap": "asked for three more months", "label": "Ask for three more months", "reason": null, "weight": 0, "tension": -1, "next": "r1_end_months"}
+      ]
+    },
+    "r1_m3b": {
+      "text": "You talk until the kettle has gone cold twice. Nobody is guilty. He says, “I don’t want us to turn into people who can’t stand each other.” You find that you don’t want that either.",
+      "choices": [
+        {"id": "r1_58", "recap": "said “Let’s do this properly”", "label": "“Then let’s do this properly.”", "reason": "Divorce By Mutual Agreement", "weight": 2, "tension": 0, "next": "r1_m4"},
+        {"id": "r1_59", "recap": "decided not to decide tonight", "label": "“Let’s not decide tonight.”", "reason": null, "weight": 0, "tension": -1, "next": "r1_end_months"}
+      ]
+    },
+    "r1_m4": {
+      "text": "Practical questions arrive faster than feelings. Who tells the children, and how. Who keeps the flat. He writes a list, and you add to it. It is oddly gentle work.",
+      "choices": [
+        {"id": "r1_60", "recap": "told the children together, and kept it simple", "label": "Tell the children together, and keep it simple", "reason": "Divorce By Mutual Agreement", "weight": 3, "tension": 0, "next": "r1_end_conv"},
+        {"id": "r1_61", "recap": "asked a mediator to help with the rest", "label": "Ask a mediator to help with the rest", "reason": "Divorce By Mutual Agreement", "weight": 3, "tension": 0, "next": "r1_end_mediated"},
+        {"id": "r1_62", "recap": "asked for a week before signing", "label": "Say you need a week before anything is signed", "reason": null, "weight": 0, "tension": -1, "next": "r1_end_months"}
+      ]
+    },
+    "r1_end_conv": {
+      "text": "You sit on the sofa with the children between you and say it plainly: you both love them, and you are both staying their parents. It hurts. It is also true, and they can tell.",
+      "choices": [],
+      "ending": {"title": "The Conversation", "tone": "uneasy"}
+    },
+    "r1_end_mediated": {
+      "text": "The mediator’s office smells of coffee and printer ink. Nobody raises their voice. By the end of the hour you have agreed on more than you expected, and grieved more than you planned to.",
+      "choices": [],
+      "ending": {"title": "A fair split", "tone": "uneasy"}
+    },
+    "r1_end_months": {
+      "text": "You agree to wait, and you both know what you are waiting for. It isn’t anger. It is the quiet of two people who have already said the hard part.",
+      "choices": [],
+      "ending": {"title": "Three more months", "tone": "uneasy"}
+    },
+    "r1_p1": {
+      "text": "It was never one big fight. It is the small things done differently: he plans the week on Sunday night, and you find out your week on Monday morning. He likes a quiet house and you like a full one. For years you called it charming. Lately you have noticed that you stopped.",
+      "choices": [
+        {"id": "r1_69", "recap": "teased him about his colour-coded calendar", "label": "Tease him about his colour-coded calendar", "reason": null, "weight": 0, "tension": 0, "next": "r1_p2a"},
+        {"id": "r1_70", "recap": "asked if they had become different people", "label": "Ask: “Do you ever feel like we are different people?”", "reason": "Personality Differences", "weight": 1, "tension": 0, "next": "r1_p2b"},
+        {"id": "r1_71", "recap": "kept the peace and said nothing", "label": "Keep the peace and say nothing", "reason": "Personality Differences", "weight": 1, "tension": 0, "next": "r1_p2c"}
+      ]
+    },
+    "r1_p2a": {
+      "text": "He laughs, and then he doesn’t. “You always say it like it’s a joke,” he says. “It doesn’t always feel like one.” One of the children looks up from the table.",
+      "choices": [
+        {"id": "r1_72", "recap": "asked what he means", "label": "Ask what he means", "reason": null, "weight": 0, "tension": -1, "next": "r1_p3a"},
+        {"id": "r1_73", "recap": "changed the subject", "label": "Change the subject", "reason": "Personality Differences", "weight": 1, "tension": 1, "next": "r1_p3b"}
+      ]
+    },
+    "r1_p2b": {
+      "text": "He takes his time. “Yes,” he says at last. “But I used to like that about you.” The kettle clicks off behind you, and neither of you moves.",
+      "choices": [
+        {"id": "r1_74", "recap": "asked what changed", "label": "“I used to like it about you too. What changed?”", "reason": null, "weight": 0, "tension": -1, "next": "r1_p3a"},
+        {"id": "r1_75", "recap": "said maybe they like different things now", "label": "“Maybe we like different things now.”", "reason": "Personality Differences", "weight": 1, "tension": 0, "next": "r1_p3c"}
+      ]
+    },
+    "r1_p2c": {
+      "text": "Weeks of small concessions follow. You go to his sister’s dinner instead of the concert. He skips the party he was looking forward to. Each time, someone says “No problem” a little too quickly.",
+      "choices": [
+        {"id": "r1_76", "recap": "kept a quiet tally of what they have given up", "label": "Keep a quiet tally of what you have given up", "reason": "Personality Differences", "weight": 1, "tension": 1, "next": "r1_p3b"},
+        {"id": "r1_77", "recap": "suggested taking turns", "label": "Suggest taking turns: one weekend his, one weekend yours", "reason": null, "weight": 0, "tension": -1, "next": "r1_p3a"}
+      ]
+    },
+    "r1_p3a": {
+      "text": "You sit down at the kitchen table and write the rule on the back of an envelope: one weekend his idea, the next weekend yours. It is oddly easy. It is also a little sad that it needed a rule.",
+      "choices": [
+        {"id": "r1_78", "recap": "tried it for three months and saw", "label": "Try it for three months and see", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_turns"},
+        {"id": "r1_79", "recap": "added one evening a week with nothing planned at all", "label": "Add one evening a week with nothing planned at all", "reason": null, "weight": 0, "tension": -1, "next": "r1_end_translate"}
+      ]
+    },
+    "r1_p3b": {
+      "text": "The tally grows longer than either of you admits. At a friend’s barbecue he gently corrects a story you are telling, in front of everyone. Nobody else notices. You do.",
+      "choices": [
+        {"id": "r1_80", "recap": "asked him not to correct them in public", "label": "“Please don’t correct me in front of people.”", "reason": "Personality Differences", "weight": 1, "tension": 1, "next": "r1_p4"},
+        {"id": "r1_81", "recap": "laughed it off and added it to the list", "label": "Laugh it off and add it to the list", "reason": "Personality Differences", "weight": 1, "tension": 0, "next": "r1_end_tally"}
+      ]
+    },
+    "r1_p3c": {
+      "text": "He nods slowly. “So what do we do with that?” It is not an accusation. It is a real question, and neither of you has an answer ready.",
+      "choices": [
+        {"id": "r1_82", "recap": "looked for what they still share", "label": "“Maybe we look for what we still share.”", "reason": null, "weight": 0, "tension": -1, "next": "r1_p3a"},
+        {"id": "r1_83", "recap": "said they don’t have to share everything", "label": "“Maybe we don’t have to share everything.”", "reason": null, "weight": 0, "tension": 0, "next": "r1_end_translate"},
+        {"id": "r1_84", "recap": "admitted they didn’t know", "label": "“I honestly don’t know.”", "reason": "Personality Differences", "weight": 1, "tension": 0, "next": "r1_p4"}
+      ]
+    },
+    "r1_p4": {
+      "text": "Years of small differences line up, and for the first time you see them as one thing. It is not a quarrel. It is a direction. He wants a life that is quiet and planned, and you want one that is open. Neither of you is wrong, and you cannot both have it.",
+      "choices": [
+        {"id": "r1_85", "recap": "said they wanted different lives", "label": "Say it plainly: “I think we want different lives.”", "reason": "Personality Differences", "weight": 3, "tension": 0, "next": "r1_end_different"},
+        {"id": "r1_86", "recap": "asked for time before deciding anything", "label": "Ask for time before deciding anything", "reason": null, "weight": 0, "tension": -1, "next": "r1_end_tally"},
+        {"id": "r1_87", "recap": "suggested counselling, to learn each other’s language", "label": "Suggest counselling, to learn each other’s language", "reason": null, "weight": 0, "tension": -1, "next": "r1_end_translate"}
+      ]
+    },
+    "r1_end_turns": {
+      "text": "Three months later the envelope is still on the fridge, soft at the corners. Some weekends are his and some are yours. It is not a perfect system, but you both know the rules, and you have stopped keeping score.",
+      "choices": [],
+      "ending": {"title": "Taking turns", "tone": "hopeful"}
+    },
+    "r1_end_translate": {
+      "text": "You will never want the same things. You are starting to understand that this is not the problem. It is the work. He explains his calendar, and you explain your Mondays, and it is the most honest talk you have had in years.",
+      "choices": [],
+      "ending": {"title": "A shared language", "tone": "hopeful"}
+    },
+    "r1_end_tally": {
+      "text": "Nothing is wrong enough to say out loud, and nothing is right enough to let go of. The list grows quietly in both your heads. You are still here, and you are both still counting.",
+      "choices": [],
+      "ending": {"title": "The tally", "tone": "uneasy"}
+    },
+    "r1_end_different": {
+      "text": "He doesn’t argue. He says, “I think I knew,” and you realise he has been carrying it too. It is not a villain’s ending or a victim’s. It is two decent people who grew into different shapes, and who are tired of pretending they didn’t.",
+      "choices": [],
+      "ending": {"title": "Different people", "tone": "uneasy"}
+    },
+    "r1_x1": {
+      "text": "It starts as care. “Where were you?” “Who was that?” He asks lightly, with a smile, three times this week. Each question is small. Together they are starting to look like a pattern.",
+      "choices": [
+        {"id": "r1_89", "recap": "told themselves it was love", "label": "Tell yourself it is just how he shows love", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 0, "sets": ["excused"], "next": "r1_c3a"},
+        {"id": "r1_90", "recap": "shared their location", "label": "Share your location so he stops asking", "reason": "Unreasonable Behaviour", "weight": 1, "tension": 0, "sets": ["excused", "shared_location"], "next": "r1_c3a"},
+        {"id": "r1_91", "recap": "told him it bothered them", "label": "Tell him it bothers you", "reason": null, "weight": 0, "tension": 1, "sets": ["spoke_up"], "next": "r1_s3a", "route": [{"if": {"chance": 0.4}, "to": "r1_s3b"}]}
+      ]
     }
   }
 }
